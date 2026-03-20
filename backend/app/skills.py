@@ -1,112 +1,142 @@
 from __future__ import annotations
 
-import os
 import re
-from collections import defaultdict
+from functools import lru_cache
 
-from .data_loader import load_skills
+from .data_loader import Domain, load_skills
+from .llm_classifier import classify_with_gemini
+from .schemas import JDData
 
 
-SECTION_HINTS = {
-    "skills": "skills",
-    "summary": "summary",
-    "experience": "experience",
-    "projects": "projects",
+MANUAL_ALIASES: dict[str, list[str]] = {
+    "CI/CD": ["ci/cd", "cicd", "pipeline", "pipelines"],
+    "Linux/CLI": ["linux", "cli", "terminal", "shell"],
+    "HTML/CSS": ["html", "css", "html/css"],
+    "REST APIs": ["rest api", "rest apis", "restful api", "api development"],
+    "Node.js": ["node.js", "nodejs", "node js"],
+    "Databases (NoSQL)": ["nosql", "mongodb", "document database"],
+    "Caching (Redis)": ["redis", "cache", "caching"],
+    "Message Queues": ["message queue", "message queues", "kafka", "rabbitmq"],
+    "Cloud Basics": ["cloud", "aws", "gcp", "azure"],
+    "Security Basics": ["security", "application security", "auth"],
+    "TypeScript": ["typescript", "ts"],
+    "OOP": ["oop", "object oriented programming", "object-oriented programming"],
+    "Data Visualization": ["data visualization", "dashboard", "dashboards", "visualization"],
+    "Machine Learning Fundamentals": ["machine learning fundamentals", "machine learning", "ml fundamentals", "ml"],
+    "Feature Engineering": ["feature engineering", "feature selection"],
+    "Model Evaluation": ["model evaluation", "cross validation", "precision", "recall", "roc"],
+    "Deep Learning": ["deep learning", "dl"],
+    "Neural Networks": ["neural networks", "neural network", "cnn", "rnn"],
+    "NLP": ["nlp", "natural language processing"],
+    "Data Engineering": ["data engineering", "data pipeline", "data pipelines"],
+    "ETL Pipelines": ["etl", "etl pipelines", "data orchestration"],
+    "LLMs": ["llm", "llms", "large language models", "prompt engineering", "gpt"],
+    "Vector Databases": ["vector database", "vector databases", "embeddings", "semantic search"],
+    "NumPy": ["numpy"],
+    "Pandas": ["pandas", "dataframe", "dataframes"],
+    "MLOps": ["mlops", "ml ops"],
+    "Model Deployment": ["model deployment", "deployment", "inference endpoint"],
 }
 
 
-def build_skill_lookup():
-    lookup: dict[str, dict] = {}
-    for skill in load_skills():
-        for alias in [skill["label"], *skill["aliases"]]:
-            lookup[alias.lower()] = skill
-    return lookup
+@lru_cache(maxsize=2)
+def build_aliases(domain: Domain) -> dict[str, list[str]]:
+    aliases: dict[str, list[str]] = {}
+    for skill in load_skills(domain):
+        normalized = skill.lower()
+        generated = {
+            normalized,
+            normalized.replace("/", " "),
+            normalized.replace("-", " "),
+            normalized.replace("(", "").replace(")", ""),
+        }
+        generated.update(MANUAL_ALIASES.get(skill, []))
+        aliases[skill] = sorted(alias for alias in generated if alias.strip())
+    return aliases
 
 
-def detect_sections(text: str) -> dict[str, str]:
-    section = "general"
-    sections: dict[str, str] = {}
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        lowered = line.lower().rstrip(":")
-        if lowered in SECTION_HINTS:
-            section = SECTION_HINTS[lowered]
-            continue
-        if line:
-            sections[line] = section
-    return sections
+def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
+    llm_result = classify_with_gemini(resume_text, domain, mode="resume")
+    if isinstance(llm_result, list):
+        normalized = []
+        allowed = set(load_skills(domain))
+        for item in llm_result:
+            skill = item.get("skill")
+            if skill in allowed:
+                normalized.append(
+                    {
+                        "skill": skill,
+                        "mentions": int(item.get("mentions", 1)),
+                        "in_recent_experience": bool(item.get("in_recent_experience", False)),
+                    }
+                )
+        if normalized:
+            normalized.sort(key=lambda item: (-item["mentions"], item["skill"]))
+            return normalized
+    aliases = build_aliases(domain)
+    lowered = resume_text.lower()
+    recent_cutoff = max(len(lowered) // 2, 1)
+    items: list[dict] = []
+    for skill, skill_aliases in aliases.items():
+        mentions = 0
+        recent = False
+        for alias in skill_aliases:
+            pattern = re.compile(rf"\b{re.escape(alias)}\b", re.IGNORECASE)
+            hits = list(pattern.finditer(resume_text))
+            mentions += len(hits)
+            if any(hit.start() <= recent_cutoff for hit in hits):
+                recent = True
+        if mentions:
+            items.append(
+                {
+                    "skill": skill,
+                    "mentions": mentions,
+                    "in_recent_experience": recent,
+                }
+            )
+    items.sort(key=lambda item: (-item["mentions"], item["skill"]))
+    return items
 
 
-def extract_skill_evidence(text: str):
-    lookup = build_skill_lookup()
-    sections = detect_sections(text)
-    evidence: dict[str, dict] = {}
-    hits = defaultdict(int)
-    lowered_text = text.lower()
-    for alias, skill in lookup.items():
-        if alias not in lowered_text:
-            continue
-        pattern = re.compile(rf"(.{{0,45}}{re.escape(alias)}.{{0,45}})", re.IGNORECASE)
-        snippets = [match.group(1).strip() for match in pattern.finditer(text)][:3]
-        section = "general"
-        for original_line, line_section in sections.items():
-            if alias in original_line.lower():
-                section = line_section
-                break
-        hits[skill["id"]] += max(1, len(snippets))
-        item = evidence.setdefault(
-            skill["id"],
-            {
-                "skill_id": skill["id"],
-                "label": skill["label"],
-                "snippets": [],
-                "source_section": section,
-                "category": skill["category"],
-            },
-        )
-        item["snippets"].extend(snippets or [skill["label"]])
-        if section in {"skills", "summary", "experience"}:
-            item["source_section"] = section
-    results = []
-    for skill_id, item in evidence.items():
-        item["hits"] = hits[skill_id]
-        item["snippets"] = list(dict.fromkeys(item["snippets"]))[:3]
-        results.append(item)
-    results.sort(key=lambda value: (-value["hits"], value["label"]))
-    return results
+def classify_jd(jd_text: str, domain: Domain) -> JDData:
+    llm_result = classify_with_gemini(jd_text, domain, mode="jd")
+    if isinstance(llm_result, dict):
+        allowed = set(load_skills(domain))
+        required = [skill for skill in llm_result.get("required", []) if skill in allowed]
+        preferred = [skill for skill in llm_result.get("preferred", []) if skill in allowed and skill not in required]
+        if required or preferred:
+            return JDData(required=required, preferred=preferred)
+    aliases = build_aliases(domain)
+    lowered = jd_text.lower()
+    required_block = extract_block(lowered, ["required", "must have"], ["preferred", "bonus", "nice to have"])
+    preferred_block = extract_block(lowered, ["preferred", "nice to have"], ["bonus"])
+    bonus_block = extract_block(lowered, ["bonus"], [])
+    required: list[str] = []
+    preferred: list[str] = []
+    for skill, skill_aliases in aliases.items():
+        if contains_any(required_block, skill_aliases):
+            required.append(skill)
+        elif contains_any(preferred_block, skill_aliases) or contains_any(bonus_block, skill_aliases):
+            preferred.append(skill)
+    if not required and not preferred:
+        for skill, skill_aliases in aliases.items():
+            if contains_any(lowered, skill_aliases):
+                preferred.append(skill)
+    return JDData(required=required, preferred=preferred)
 
 
-def infer_target_importance(job_description_text: str):
-    evidence = extract_skill_evidence(job_description_text)
-    lines = [line.strip() for line in job_description_text.splitlines() if line.strip()]
-    target_skills = []
-    for item in evidence:
-        skill_id = item["skill_id"]
-        label = item["label"]
-        importance = "preferred"
-        for line in lines:
-            lowered_line = line.lower()
-            if label.lower() not in lowered_line:
-                continue
-            if any(keyword in lowered_line for keyword in ["bonus", "nice to have"]):
-                importance = "bonus"
-            elif any(keyword in lowered_line for keyword in ["preferred", "ideal candidate"]):
-                importance = "preferred"
-            elif any(keyword in lowered_line for keyword in ["required", "must have", "include"]):
-                importance = "required"
-        target_skills.append({"skill_id": skill_id, "label": label, "importance": importance})
-    deduped = {}
-    for skill in target_skills:
-        current = deduped.get(skill["skill_id"])
-        if not current or importance_rank(skill["importance"]) > importance_rank(current["importance"]):
-            deduped[skill["skill_id"]] = skill
-    return list(deduped.values())
+def contains_any(text: str, aliases: list[str]) -> bool:
+    return any(re.search(rf"\b{re.escape(alias)}\b", text, re.IGNORECASE) for alias in aliases)
 
 
-def importance_rank(importance: str) -> int:
-    order = {"bonus": 0, "preferred": 1, "required": 2}
-    return order[importance]
-
-
-def llm_enrichment_enabled() -> bool:
-    return bool(os.getenv("OPENAI_API_KEY")) and os.getenv("SKILLGRAPH_ENABLE_LLM", "0") == "1"
+def extract_block(text: str, starts: list[str], ends: list[str]) -> str:
+    start_positions = [text.find(keyword) for keyword in starts if text.find(keyword) != -1]
+    if not start_positions:
+        return ""
+    start = min(start_positions)
+    end = len(text)
+    for keyword in ends:
+        position = text.find(keyword, start + 1)
+        if position != -1:
+            end = min(end, position)
+    return text[start:end]

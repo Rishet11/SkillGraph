@@ -1,0 +1,26 @@
+[
+  ["Python", "Data Structures"],
+  ["Python", "OOP"],
+  ["Data Structures", "Algorithms"],
+  ["Algorithms", "System Design"],
+  ["OOP", "Design Patterns"],
+  ["Design Patterns", "Clean Code"],
+  ["SQL", "Databases (NoSQL)"],
+  ["REST APIs", "GraphQL"],
+  ["Git", "CI/CD"],
+  ["Testing", "CI/CD"],
+  ["Linux/CLI", "Docker"],
+  ["Operating Systems", "Linux/CLI"],
+  ["Docker", "Cloud Basics"],
+  ["Cloud Basics", "Microservices"],
+  ["System Design", "Microservices"],
+  ["Microservices", "Message Queues"],
+  ["Microservices", "Caching (Redis)"],
+  ["Computer Networks", "Security Basics"],
+  ["HTML/CSS", "JavaScript"],
+  ["JavaScript", "TypeScript"],
+  ["JavaScript", "React"],
+  ["JavaScript", "Node.js"],
+  ["Node.js", "REST APIs"]
+]
+

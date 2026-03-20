@@ -1,4 +1,0 @@
-Role: Junior AI Engineer
-
-We are looking for an AI engineer who can build intelligent product features using Python and modern machine learning tooling. Required skills include Python, SQL, machine learning, scikit-learn, and data handling. Preferred skills include NLP, deep learning, LLM applications, experimentation, and service integration. Data visualization is a bonus.
-

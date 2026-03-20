@@ -1,0 +1,35 @@
+[
+  {
+    "id": "demo-swe",
+    "label": "Junior SWE to Senior SWE",
+    "domain": "swe",
+    "story": "This hire knows frontend JavaScript but lacks production backend and systems depth. The path should skip basics they already know and focus on production-readiness gaps.",
+    "resume_text": "Candidate has recent experience with Python, HTML/CSS, JavaScript, Git and some SQL. They also have older exposure to OOP. Built frontend features using JavaScript and HTML/CSS, collaborated with Git, and wrote small Python utilities. Skills: Python, HTML/CSS, JavaScript, Git, SQL, OOP.",
+    "jd_text": "Senior SWE role. Required skills: System Design, Docker, CI/CD, Microservices, Testing, TypeScript. Preferred skills: GraphQL, Caching (Redis), Cloud Basics.",
+    "expected_path_start": [
+      "Testing",
+      "Data Structures",
+      "Algorithms",
+      "TypeScript",
+      "Linux/CLI",
+      "Docker"
+    ]
+  },
+  {
+    "id": "demo-data",
+    "label": "Junior Data Analyst to ML Engineer",
+    "domain": "data",
+    "story": "This candidate can query and analyze data but has never built production ML systems. The path should preserve their SQL and Pandas strength while building the ML chain upward.",
+    "resume_text": "Candidate has recent experience with SQL, Pandas and Python. They also have some older data visualization work. Built dashboards, queried warehouse tables, and cleaned data in Pandas. Skills: SQL, Pandas, Python, Data Visualization.",
+    "jd_text": "ML Engineer role. Required skills: Machine Learning Fundamentals, Deep Learning, Feature Engineering, MLOps, Model Deployment, NumPy. Preferred skills: NLP, Vector Databases, LLMs.",
+    "expected_path_start": [
+      "Statistics",
+      "Linear Algebra",
+      "NumPy",
+      "Machine Learning Fundamentals",
+      "Supervised Learning",
+      "Feature Engineering"
+    ]
+  }
+]
+

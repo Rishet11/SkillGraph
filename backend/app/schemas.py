@@ -5,20 +5,14 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-Importance = Literal["required", "preferred", "bonus"]
-GapType = Literal["missing", "weak", "adjacent"]
-NodeType = Literal[
-    "current_skill",
-    "target_skill",
-    "gap_skill",
-    "prerequisite",
-    "recommended_course",
-]
+Domain = Literal["swe", "data"]
+NodeStatus = Literal["mastered", "partial", "critical_gap", "selected_path", "unseen"]
 
 
 class TextPayload(BaseModel):
+    domain: Domain
     resume_text: str = Field(default="")
-    job_description_text: str = Field(default="")
+    jd_text: str = Field(default="")
 
 
 class ParseMetadata(BaseModel):
@@ -28,64 +22,86 @@ class ParseMetadata(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
-class SkillEvidence(BaseModel):
-    skill_id: str
-    label: str
-    mastery_score: int
-    evidence_snippets: list[str]
-    source_section: str
+class ResumeSkill(BaseModel):
+    skill: str
+    mentions: int
+    in_recent_experience: bool
 
 
-class TargetSkill(BaseModel):
-    skill_id: str
-    label: str
-    importance: Importance
+class JDData(BaseModel):
+    required: list[str]
+    preferred: list[str]
 
 
-class MatchResult(BaseModel):
-    skill_id: str
-    label: str
-    status: Literal["matched", "partial"]
-    mastery_score: int
-    reason: str
+class ParseResponse(BaseModel):
+    domain: Domain
+    resume_skills: list[ResumeSkill]
+    jd_data: JDData
+    mastery_scores: dict[str, float]
+    parse_metadata: dict[str, ParseMetadata] | None = None
 
 
-class GapResult(BaseModel):
-    skill_id: str
-    label: str
-    gap_type: GapType
-    missing_prerequisites: list[str]
-    reason: str
+class PathwayRequest(BaseModel):
+    domain: Domain
+    resume_skills: list[ResumeSkill]
+    jd_data: JDData
+    mastery_scores: dict[str, float]
 
 
-class RecommendedCourse(BaseModel):
-    course_id: str
-    title: str
-    provider: str
+class RecomputeRequest(PathwayRequest):
+    learned_skill: str
+
+
+class Course(BaseModel):
+    id: str
+    name: str
+    covers: list[str]
+    difficulty: int
+    domain: str
     url: str
-    duration: str
 
 
-class LearningStep(BaseModel):
-    order: int
-    skill_id: str
-    goal: str
-    recommended_courses: list[RecommendedCourse]
-    why_now: str
+class TraceItem(BaseModel):
+    skill: str
+    position: int
+    mastery: float
+    priority_score: float
+    required_by_jd: bool
+    preferred_by_jd: bool
+    unlocks: list[str]
+    downstream_depth: int
+    reason: str
 
 
 class GraphNode(BaseModel):
     id: str
     label: str
-    type: NodeType
-    score: int | None = None
+    mastery: float
+    status: NodeStatus
 
 
 class GraphEdge(BaseModel):
     source: str
     target: str
-    kind: str
-    reason: str
+
+
+class Metrics(BaseModel):
+    redundant_modules_eliminated: int
+    naive_path_length: int
+    recommended_path_length: int
+    reasoning_trace_coverage: int
+
+
+class PathwayResponse(BaseModel):
+    path: list[str]
+    reasoning: list[TraceItem]
+    course_map: dict[str, Course]
+    mastery_scores: dict[str, float]
+    gap_count: int
+    gap_skills: list[str]
+    domain: Domain
+    graph: dict[str, list[GraphNode] | list[GraphEdge]]
+    metrics: Metrics
 
 
 class AnalyzeSummary(BaseModel):
@@ -94,28 +110,32 @@ class AnalyzeSummary(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    fit_score: int
-    confidence: int
-    resume_skills: list[SkillEvidence]
-    target_skills: list[TargetSkill]
-    matched_skills: list[MatchResult]
-    missing_skills: list[GapResult]
+    domain: Domain
+    all_skills: list[str]
+    resume_skills: list[ResumeSkill]
+    jd_data: JDData
+    mastery_scores: dict[str, float]
+    path: list[str]
+    reasoning: list[TraceItem]
+    course_map: dict[str, Course]
+    gap_count: int
+    gap_skills: list[str]
     graph: dict[str, list[GraphNode] | list[GraphEdge]]
-    learning_path: list[LearningStep]
-    summary: AnalyzeSummary
-    warnings: list[str]
+    metrics: Metrics
     parse_metadata: dict[str, ParseMetadata]
+    summary: AnalyzeSummary
+    warnings: list[str] = Field(default_factory=list)
 
 
-class SampleItem(BaseModel):
+class SampleScenario(BaseModel):
     id: str
     label: str
-    type: Literal["resume", "job_description"]
+    domain: Domain
+    story: str
 
 
-class SampleContent(BaseModel):
-    id: str
-    label: str
-    type: Literal["resume", "job_description"]
-    content: str
+class SampleScenarioDetail(SampleScenario):
+    resume_text: str
+    jd_text: str
+    expected_path_start: list[str]
 

@@ -1,123 +1,108 @@
 from __future__ import annotations
 
-from collections import defaultdict, deque
-
-from .data_loader import load_edges, load_skills
-
-
-def build_prerequisite_map():
-    prerequisites = defaultdict(list)
-    for edge in load_edges():
-        prerequisites[edge["target"]].append(edge)
-    return prerequisites
+from .data_loader import Domain, load_edges, load_skills
+from .mastery import MASTERY_THRESHOLD
+from .nx_compat import nx
+from .schemas import JDData
 
 
-def get_skill_label(skill_id: str) -> str:
-    for skill in load_skills():
-        if skill["id"] == skill_id:
-            return skill["label"]
-    return skill_id.replace("_", " ").title()
+def build_skill_graph(domain: Domain) -> nx.DiGraph:
+    graph = nx.DiGraph()
+    skills = load_skills(domain)
+    graph.add_nodes_from(skills)
+    graph.add_edges_from(load_edges(domain))
+    return graph
 
 
-def collect_missing_prerequisites(skill_id: str, owned_skills: set[str]) -> list[str]:
-    prerequisites = build_prerequisite_map()
-    queue = deque([skill_id])
-    missing: list[str] = []
+def identify_gaps(all_skills: list[str], mastery_scores: dict[str, float], jd_data: JDData) -> set[str]:
+    jd_skills = set(jd_data.required) | set(jd_data.preferred)
+    return {
+        skill
+        for skill in all_skills
+        if skill in jd_skills and mastery_scores.get(skill, 0.0) < MASTERY_THRESHOLD
+    }
+
+
+def build_gap_subgraph(graph: nx.DiGraph, gap_skills: set[str]) -> nx.DiGraph:
+    nodes_to_include = set(gap_skills)
+    for skill in gap_skills:
+        nodes_to_include.update(nx.ancestors(graph, skill))
+    return graph.subgraph(nodes_to_include).copy()
+
+
+def compute_priority(
+    skill: str, subgraph: nx.DiGraph, jd_data: JDData, mastery_scores: dict[str, float]
+) -> float:
+    if skill in jd_data.required:
+        jd_importance = 1.0
+    elif skill in jd_data.preferred:
+        jd_importance = 0.6
+    else:
+        jd_importance = 0.0
+    descendants = nx.descendants(subgraph, skill)
+    downstream_depth = (
+        nx.dag_longest_path_length(subgraph.subgraph({skill} | descendants))
+        if descendants
+        else 0
+    )
+    mastery = mastery_scores.get(skill, 0.0)
+    priority = 0.4 * jd_importance + 0.4 * downstream_depth - 0.2 * mastery
+    return round(priority, 4)
+
+
+def build_learning_subgraph(subgraph: nx.DiGraph, mastery_scores: dict[str, float]) -> nx.DiGraph:
+    nodes = [
+        node for node in subgraph.nodes
+        if mastery_scores.get(node, 0.0) < MASTERY_THRESHOLD
+    ]
+    return subgraph.subgraph(nodes).copy()
+
+
+def generate_learning_path(
+    subgraph: nx.DiGraph, priorities: dict[str, float], mastery_scores: dict[str, float]
+) -> list[str]:
+    if subgraph.number_of_nodes() == 0:
+        return []
+    in_degree = dict(subgraph.in_degree())
+    path: list[str] = []
     visited: set[str] = set()
-    while queue:
-        current = queue.popleft()
-        for edge in prerequisites.get(current, []):
-            source = edge["source"]
-            if source in visited:
+    frontier = [node for node, degree in in_degree.items() if degree == 0]
+    while frontier:
+        frontier = list(dict.fromkeys(frontier))
+        frontier.sort(key=lambda node: (-priorities.get(node, 0.0), mastery_scores.get(node, 0.0), node))
+        chosen = frontier.pop(0)
+        if chosen in visited:
+            continue
+        path.append(chosen)
+        visited.add(chosen)
+        for successor in subgraph.successors(chosen):
+            if successor in visited:
                 continue
-            visited.add(source)
-            if source not in owned_skills:
-                missing.append(source)
-            queue.append(source)
-    return missing
+            if all(pred in visited for pred in subgraph.predecessors(successor)):
+                frontier.append(successor)
+    return path
 
 
-def build_graph_payload(resume_skills, target_skills, gaps, learning_path):
-    resume_ids = {skill["skill_id"] for skill in resume_skills}
-    target_ids = {skill["skill_id"] for skill in target_skills}
+def build_graph_payload(
+    subgraph: nx.DiGraph,
+    path: list[str],
+    mastery_scores: dict[str, float],
+    gap_skills: set[str],
+) -> dict:
+    path_set = set(path)
     nodes = []
-    edges = []
-    for skill in resume_skills:
-        nodes.append(
-            {
-                "id": skill["skill_id"],
-                "label": skill["label"],
-                "type": "current_skill",
-                "score": skill["mastery_score"],
-            }
-        )
-    for skill in target_skills:
-        nodes.append(
-            {
-                "id": f"target:{skill['skill_id']}",
-                "label": skill["label"],
-                "type": "target_skill",
-                "score": None,
-            }
-        )
-        edges.append(
-            {
-                "source": skill["skill_id"] if skill["skill_id"] in resume_ids else f"gap:{skill['skill_id']}",
-                "target": f"target:{skill['skill_id']}",
-                "kind": "targets",
-                "reason": f"{skill['label']} is expected for the target role.",
-            }
-        )
-    for gap in gaps:
-        gap_id = f"gap:{gap['skill_id']}"
-        nodes.append(
-            {
-                "id": gap_id,
-                "label": gap["label"],
-                "type": "gap_skill",
-                "score": None,
-            }
-        )
-        for prereq in gap["missing_prerequisites"]:
-            prereq_id = f"prereq:{prereq}"
-            nodes.append(
-                {
-                    "id": prereq_id,
-                    "label": get_skill_label(prereq),
-                    "type": "prerequisite",
-                    "score": None,
-                }
-            )
-            edges.append(
-                {
-                    "source": prereq_id,
-                    "target": gap_id,
-                    "kind": "prerequisite",
-                    "reason": f"{get_skill_label(prereq)} supports {gap['label']}.",
-                }
-            )
-    for step in learning_path:
-        course_ids = []
-        for course in step["recommended_courses"]:
-            course_node_id = f"course:{course['course_id']}"
-            course_ids.append(course_node_id)
-            nodes.append(
-                {
-                    "id": course_node_id,
-                    "label": course["title"],
-                    "type": "recommended_course",
-                    "score": None,
-                }
-            )
-            edges.append(
-                {
-                    "source": course_node_id,
-                    "target": f"gap:{step['skill_id']}",
-                    "kind": "recommended_for",
-                    "reason": f"{course['title']} helps close the {get_skill_label(step['skill_id'])} gap.",
-                }
-            )
-    deduped_nodes = list({node["id"]: node for node in nodes}.values())
-    deduped_edges = list({(edge["source"], edge["target"], edge["kind"]): edge for edge in edges}.values())
-    return {"nodes": deduped_nodes, "edges": deduped_edges}
-
+    for node in subgraph.nodes:
+        mastery = mastery_scores.get(node, 0.0)
+        if node in path_set:
+            status = "selected_path"
+        elif node in gap_skills:
+            status = "critical_gap"
+        elif mastery >= 0.8:
+            status = "mastered"
+        elif mastery >= 0.4:
+            status = "partial"
+        else:
+            status = "unseen"
+        nodes.append({"id": node, "label": node, "mastery": mastery, "status": status})
+    edges = [{"source": source, "target": target} for source, target in subgraph.edges]
+    return {"nodes": nodes, "edges": edges}

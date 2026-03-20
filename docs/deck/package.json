@@ -1,0 +1,13 @@
+{
+  "name": "skillgraph-deck",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "scripts": {
+    "build": "node build_deck.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "3.12.0"
+  }
+}
+

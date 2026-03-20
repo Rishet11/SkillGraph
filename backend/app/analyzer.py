@@ -1,33 +1,32 @@
 from __future__ import annotations
 
-from .explanations import build_summary
-from .graph import build_graph_payload
+from .courses import recommend_course
+from .data_loader import Domain, load_skills
+from .graph import (
+    build_gap_subgraph,
+    build_graph_payload,
+    build_learning_subgraph,
+    build_skill_graph,
+    compute_priority,
+    generate_learning_path,
+    identify_gaps,
+)
+from .mastery import compute_mastery_scores
 from .parser import ParsedDocument
-from .recommendations import build_learning_path
-from .scoring import compare_skills, score_resume_skills
-from .schemas import AnalyzeResponse, ParseMetadata
-from .skills import extract_skill_evidence, infer_target_importance
+from .reasoning import generate_trace
+from .schemas import AnalyzeResponse, AnalyzeSummary, JDData, Metrics, ParseMetadata, ParseResponse, PathwayResponse
+from .skills import classify_jd, classify_resume_skills
 
 
-def analyze_documents(resume: ParsedDocument, job_description: ParsedDocument) -> AnalyzeResponse:
-    resume_evidence = extract_skill_evidence(resume.text)
-    scored_resume_skills = score_resume_skills(resume_evidence)
-    target_skills = infer_target_importance(job_description.text)
-    matched, missing, fit_score, confidence = compare_skills(scored_resume_skills, target_skills)
-    learning_path = build_learning_path(missing)
-    graph = build_graph_payload(scored_resume_skills, target_skills, missing, learning_path)
-    warnings = list(dict.fromkeys([*resume.warnings, *job_description.warnings]))
-    return AnalyzeResponse(
-        fit_score=fit_score,
-        confidence=confidence,
-        resume_skills=scored_resume_skills,
-        target_skills=target_skills,
-        matched_skills=matched,
-        missing_skills=missing,
-        graph=graph,
-        learning_path=learning_path,
-        summary=build_summary(fit_score, matched, missing),
-        warnings=warnings,
+def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> ParseResponse:
+    resume_skills = classify_resume_skills(resume.text, domain)
+    jd_data = classify_jd(jd.text, domain)
+    mastery_scores = compute_mastery_scores(load_skills(domain), resume_skills, jd_data)
+    return ParseResponse(
+        domain=domain,
+        resume_skills=resume_skills,
+        jd_data=jd_data,
+        mastery_scores=mastery_scores,
         parse_metadata={
             "resume": ParseMetadata(
                 source=resume.source,
@@ -35,12 +34,82 @@ def analyze_documents(resume: ParsedDocument, job_description: ParsedDocument) -
                 characters=len(resume.text),
                 warnings=resume.warnings,
             ),
-            "job_description": ParseMetadata(
-                source=job_description.source,
-                filename=job_description.filename,
-                characters=len(job_description.text),
-                warnings=job_description.warnings,
+            "jd": ParseMetadata(
+                source=jd.source,
+                filename=jd.filename,
+                characters=len(jd.text),
+                warnings=jd.warnings,
             ),
         },
+    )
+
+
+def run_pathway(domain: Domain, resume_skills: list[dict], jd_data: JDData, mastery_scores: dict[str, float]) -> PathwayResponse:
+    all_skills = load_skills(domain)
+    graph = build_skill_graph(domain)
+    gap_skills = identify_gaps(all_skills, mastery_scores, jd_data)
+    gap_subgraph = build_gap_subgraph(graph, gap_skills)
+    priorities = {node: compute_priority(node, gap_subgraph, jd_data, mastery_scores) for node in gap_subgraph.nodes}
+    learning_subgraph = build_learning_subgraph(gap_subgraph, mastery_scores)
+    path = generate_learning_path(learning_subgraph, priorities, mastery_scores)
+    course_map = {skill: recommend_course(skill, gap_skills, domain) for skill in path}
+    reasoning = [
+        generate_trace(skill, index, gap_subgraph, priorities, mastery_scores, jd_data)
+        for index, skill in enumerate(path)
+    ]
+    graph_payload = build_graph_payload(gap_subgraph, path, mastery_scores, gap_skills)
+    metrics = Metrics(
+        redundant_modules_eliminated=max(0, round(((len(all_skills) - len(path)) / max(len(all_skills), 1)) * 100)),
+        naive_path_length=len(all_skills),
+        recommended_path_length=len(path),
+        reasoning_trace_coverage=100 if len(reasoning) == len(path) else 0,
+    )
+    return PathwayResponse(
+        path=path,
+        reasoning=reasoning,
+        course_map=course_map,
+        mastery_scores=mastery_scores,
+        gap_count=len(gap_skills),
+        gap_skills=sorted(gap_skills),
+        domain=domain,
+        graph=graph_payload,
+        metrics=metrics,
+    )
+
+
+def analyze_documents(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> AnalyzeResponse:
+    parsed = run_parse(domain, resume, jd)
+    pathway = run_pathway(domain, parsed.resume_skills, parsed.jd_data, parsed.mastery_scores)
+    warnings = [
+        *parsed.parse_metadata["resume"].warnings,
+        *parsed.parse_metadata["jd"].warnings,
+    ]
+    headline = "Path is ready for onboarding"
+    if pathway.gap_count >= 8:
+        headline = "Large role gap with clear dependency path"
+    elif pathway.gap_count >= 4:
+        headline = "Moderate skill gap with focused ramp plan"
+    return AnalyzeResponse(
+        domain=domain,
+        all_skills=load_skills(domain),
+        resume_skills=parsed.resume_skills,
+        jd_data=parsed.jd_data,
+        mastery_scores=pathway.mastery_scores,
+        path=pathway.path,
+        reasoning=pathway.reasoning,
+        course_map=pathway.course_map,
+        gap_count=pathway.gap_count,
+        gap_skills=pathway.gap_skills,
+        graph=pathway.graph,
+        metrics=pathway.metrics,
+        parse_metadata=parsed.parse_metadata or {},
+        summary=AnalyzeSummary(
+            headline=headline,
+            explanation=(
+                f"SkillGraph found {pathway.gap_count} gaps in the {domain.upper()} domain "
+                f"and generated a deterministic, dependency-aware path of {len(pathway.path)} steps."
+            ),
+        ),
+        warnings=list(dict.fromkeys(warnings)),
     )
 

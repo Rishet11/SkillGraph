@@ -1,15 +1,25 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from .analyzer import analyze_documents
-from .data_loader import load_samples
+from .analyzer import analyze_documents, run_parse, run_pathway
+from .data_loader import get_demo_scenario, load_courses, load_demo_scenarios
+from .graph import build_graph_payload, build_skill_graph
 from .parser import parse_text_payload, parse_uploaded_file
-from .schemas import AnalyzeResponse, SampleContent, SampleItem, TextPayload
+from .schemas import (
+    AnalyzeResponse,
+    ParseResponse,
+    PathwayRequest,
+    PathwayResponse,
+    RecomputeRequest,
+    SampleScenario,
+    SampleScenarioDetail,
+    TextPayload,
+)
 
 
-app = FastAPI(title="SkillGraph API", version="0.1.0")
+app = FastAPI(title="SkillGraph API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,69 +35,112 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/samples", response_model=list[SampleItem])
+@app.get("/samples", response_model=list[SampleScenario])
 def list_samples():
     return [
-        SampleItem(id=sample["id"], label=sample["label"], type=sample["type"])
-        for sample in load_samples()
+        SampleScenario(
+            id=item["id"],
+            label=item["label"],
+            domain=item["domain"],
+            story=item["story"],
+        )
+        for item in load_demo_scenarios()
     ]
 
 
-@app.get("/samples/{sample_id}", response_model=SampleContent)
+@app.get("/samples/{sample_id}", response_model=SampleScenarioDetail)
 def get_sample(sample_id: str):
-    for sample in load_samples():
-        if sample["id"] == sample_id:
-            return SampleContent(**sample)
-    raise HTTPException(status_code=404, detail="Sample not found")
+    sample = get_demo_scenario(sample_id)
+    if not sample:
+        raise HTTPException(status_code=404, detail="Sample not found")
+    return SampleScenarioDetail(**sample)
+
+
+@app.get("/catalog/{domain}")
+def get_catalog(domain: str):
+    if domain not in {"swe", "data"}:
+        raise HTTPException(status_code=400, detail="Domain must be 'swe' or 'data'.")
+    return load_courses(domain)  # type: ignore[arg-type]
+
+
+@app.get("/graph/{domain}")
+def get_graph(domain: str):
+    if domain not in {"swe", "data"}:
+        raise HTTPException(status_code=400, detail="Domain must be 'swe' or 'data'.")
+    graph = build_skill_graph(domain)  # type: ignore[arg-type]
+    zero_mastery = {node: 0.0 for node in graph.nodes}
+    return build_graph_payload(graph, [], zero_mastery, set())
+
+
+@app.post("/parse", response_model=ParseResponse)
+async def parse_endpoint(request: Request):
+    payload, resume, jd = await parse_request_to_documents(request)
+    return run_parse(payload.domain, resume, jd)
+
+
+@app.post("/pathway", response_model=PathwayResponse)
+def pathway_endpoint(request: PathwayRequest):
+    return run_pathway(request.domain, [item.model_dump() for item in request.resume_skills], request.jd_data, request.mastery_scores)
+
+
+@app.post("/recompute", response_model=PathwayResponse)
+def recompute_endpoint(request: RecomputeRequest):
+    updated_mastery = dict(request.mastery_scores)
+    updated_mastery[request.learned_skill] = 1.0
+    return run_pathway(
+        request.domain,
+        [item.model_dump() for item in request.resume_skills],
+        request.jd_data,
+        updated_mastery,
+    )
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
-async def analyze(request: Request):
-    try:
-        content_type = request.headers.get("content-type", "")
-        payload = None
-        resume_file: UploadFile | None = None
-        job_description_file: UploadFile | None = None
+async def analyze_endpoint(request: Request):
+    payload, resume, jd = await parse_request_to_documents(request)
+    return analyze_documents(payload.domain, resume, jd)
 
-        if "application/json" in content_type:
-            payload = TextPayload(**(await request.json()))
-        elif "multipart/form-data" in content_type:
-            form = await request.form()
-            resume_file = form.get("resume_file")
-            job_description_file = form.get("job_description_file")
-            payload = TextPayload(
-                resume_text=str(form.get("resume_text", "")),
-                job_description_text=str(form.get("job_description_text", "")),
-            )
-        else:
-            raise HTTPException(status_code=415, detail="Unsupported content type.")
 
-        if resume_file:
+async def parse_request_to_documents(request: Request):
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        payload = TextPayload(**(await request.json()))
+        if not payload.resume_text.strip() or not payload.jd_text.strip():
+            raise HTTPException(status_code=400, detail="Resume and JD text are required.")
+        resume = parse_text_payload(payload.resume_text, source="text")
+        jd = parse_text_payload(payload.jd_text, source="text")
+        return payload, resume, jd
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        domain = str(form.get("domain", "data")).lower()
+        if domain not in {"swe", "data"}:
+            raise HTTPException(status_code=400, detail="Domain must be 'swe' or 'data'.")
+        payload = TextPayload(
+            domain=domain,  # type: ignore[arg-type]
+            resume_text=str(form.get("resume_text", "")),
+            jd_text=str(form.get("jd_text", "")),
+        )
+        resume_file = form.get("resume_file")
+        jd_file = form.get("jd_file")
+        if hasattr(resume_file, "filename"):
             resume = parse_uploaded_file(
                 resume_file.filename or "resume.txt",
                 await resume_file.read(),
                 source="upload",
             )
+        elif payload.resume_text.strip():
+            resume = parse_text_payload(payload.resume_text, source="text")
         else:
-            text = payload.resume_text if payload else ""
-            if not text.strip():
-                raise HTTPException(status_code=400, detail="Resume content is required.")
-            resume = parse_text_payload(text, source="text")
-
-        if job_description_file:
-            job_description = parse_uploaded_file(
-                job_description_file.filename or "job_description.txt",
-                await job_description_file.read(),
+            raise HTTPException(status_code=400, detail="Resume content is required.")
+        if hasattr(jd_file, "filename"):
+            jd = parse_uploaded_file(
+                jd_file.filename or "job_description.txt",
+                await jd_file.read(),
                 source="upload",
             )
+        elif payload.jd_text.strip():
+            jd = parse_text_payload(payload.jd_text, source="text")
         else:
-            text = payload.job_description_text if payload else ""
-            if not text.strip():
-                raise HTTPException(status_code=400, detail="Job description content is required.")
-            job_description = parse_text_payload(text, source="text")
-
-        return analyze_documents(resume, job_description)
-    except HTTPException:
-        raise
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+            raise HTTPException(status_code=400, detail="Job description content is required.")
+        return payload, resume, jd
+    raise HTTPException(status_code=415, detail="Unsupported content type.")

@@ -139,6 +139,12 @@ select {
   align-items: start;
 }
 
+.three-panel {
+  display: grid;
+  grid-template-columns: 0.9fr 1fr 1.1fr;
+  gap: 22px;
+}
+
 .panel {
   padding: 24px;
 }
@@ -234,6 +240,14 @@ select {
   cursor: pointer;
 }
 
+.callout,
+.course-card {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
 .score-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -319,6 +333,31 @@ select {
   padding: 0 0 0 16px;
 }
 
+.skill-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.mastery-track {
+  height: 10px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: rgba(29, 31, 51, 0.08);
+  overflow: hidden;
+}
+
+.mastery-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-3));
+}
+
+.small-button {
+  padding: 8px 12px;
+}
+
 .formula {
   border-radius: 18px;
   padding: 16px;
@@ -348,6 +387,7 @@ select {
 @media (max-width: 900px) {
   .hero-grid,
   .main-grid,
+  .three-panel,
   .breakdown-grid,
   .sample-grid,
   .actions,
@@ -363,4 +403,3 @@ select {
     max-width: none;
   }
 }
-

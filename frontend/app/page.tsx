@@ -3,55 +3,87 @@
 import { useEffect, useState, useTransition } from "react";
 
 import { ResultDashboard } from "../components/ResultDashboard";
-import { analyzeFiles, fetchSampleContent, fetchSamples } from "../lib/api";
-import { AnalyzeResponse, SampleItem } from "../lib/types";
+import { analyzeFiles, fetchSampleContent, fetchSamples, recomputePath } from "../lib/api";
+import { AnalyzeResponse, Domain, SampleScenario } from "../lib/types";
 
-const loadingSteps = ["Parsing", "Extracting", "Scoring", "Graphing", "Recommending"];
+const loadingSteps = ["Parsing", "Scoring mastery", "Building gap graph", "Prioritizing path", "Writing trace"];
 
 export default function HomePage() {
+  const [domain, setDomain] = useState<Domain>("data");
   const [resumeText, setResumeText] = useState("");
-  const [jobText, setJobText] = useState("");
+  const [jdText, setJdText] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [jobFile, setJobFile] = useState<File | null>(null);
-  const [samples, setSamples] = useState<SampleItem[]>([]);
+  const [jdFile, setJdFile] = useState<File | null>(null);
+  const [samples, setSamples] = useState<SampleScenario[]>([]);
+  const [sampleStory, setSampleStory] = useState<string | null>(null);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isRecomputing, startRecompute] = useTransition();
 
   useEffect(() => {
     fetchSamples().then(setSamples).catch(() => undefined);
   }, []);
-
-  const sampleResumes = samples.filter((sample) => sample.type === "resume");
-  const sampleRoles = samples.filter((sample) => sample.type === "job_description");
-
-  const loadSample = async (sampleId: string, target: "resume" | "job") => {
-    const content = await fetchSampleContent(sampleId);
-    if (target === "resume") {
-      setResumeText(content);
-      setResumeFile(null);
-      return;
-    }
-    setJobText(content);
-    setJobFile(null);
-  };
 
   const runAnalysis = () => {
     setError(null);
     startTransition(async () => {
       try {
         const response = await analyzeFiles({
+          domain,
           resume_file: resumeFile,
-          job_description_file: jobFile,
+          jd_file: jdFile,
           resume_text: resumeText,
-          job_description_text: jobText
+          jd_text: jdText
         });
         setResult(response);
       } catch (analysisError) {
         setResult(null);
-        setError(
-          analysisError instanceof Error ? analysisError.message : "SkillGraph analysis failed."
-        );
+        setError(analysisError instanceof Error ? analysisError.message : "Analysis failed.");
+      }
+    });
+  };
+
+  const loadSampleScenario = async (sampleId: string) => {
+    const scenario = await fetchSampleContent(sampleId);
+    setDomain(scenario.domain);
+    setResumeText(scenario.resume_text);
+    setJdText(scenario.jd_text);
+    setResumeFile(null);
+    setJdFile(null);
+    setSampleStory(scenario.story);
+  };
+
+  const markLearned = (skill: string) => {
+    if (!result) {
+      return;
+    }
+    startRecompute(async () => {
+      try {
+        const updated = await recomputePath({
+          domain: result.domain,
+          resume_skills: result.resume_skills,
+          jd_data: result.jd_data,
+          mastery_scores: result.mastery_scores,
+          learned_skill: skill
+        });
+        setResult({
+          ...result,
+          mastery_scores: updated.mastery_scores,
+          path: updated.path,
+          reasoning: updated.reasoning,
+          course_map: updated.course_map,
+          gap_count: updated.gap_count,
+          gap_skills: updated.gap_skills,
+          graph: updated.graph,
+          metrics: updated.metrics,
+          summary: {
+            headline: "Path recomputed after learning update",
+            explanation: `Marked ${skill} as learned and regenerated the dependency-aware path.`
+          }
+        });
+      } catch (recomputeError) {
+        setError(recomputeError instanceof Error ? recomputeError.message : "Recompute failed.");
       }
     });
   };
@@ -63,24 +95,23 @@ export default function HomePage() {
           <div className="hero-grid">
             <div>
               <p className="hero-kicker">SkillGraph</p>
-              <h1>AI-Adaptive Onboarding Engine</h1>
+              <h1>Explainable adaptive onboarding</h1>
               <p className="hero-copy">
-                Upload a resume and a target role. SkillGraph extracts evidence, scores readiness,
-                maps missing prerequisites, and turns the gap into an explainable learning path.
+                Parse a resume and job description, classify skills into a fixed taxonomy, compute mastery, identify the gap subgraph, and generate a deterministic learning path with a visible reasoning trace.
               </p>
             </div>
             <div className="hero-stats">
               <div className="stat-card">
-                <span className="muted">Core mode</span>
-                <strong>Deterministic</strong>
+                <span className="muted">Domains</span>
+                <strong>SWE + Data</strong>
               </div>
               <div className="stat-card">
-                <span className="muted">Demo paths</span>
-                <strong>Upload + samples</strong>
+                <span className="muted">Adaptive proof</span>
+                <strong>Mark learned</strong>
               </div>
               <div className="stat-card">
-                <span className="muted">Audience</span>
-                <strong>Hackathon judges</strong>
+                <span className="muted">Grounding</span>
+                <strong>Fixed catalog</strong>
               </div>
             </div>
           </div>
@@ -89,11 +120,19 @@ export default function HomePage() {
         <section className="main-grid grid">
           <div className="panel">
             <p className="section-kicker">Input</p>
-            <h2>Analyze candidate fit</h2>
-            <p className="muted">
-              Use real uploads when available. Keep sample scenarios ready for a stable stage demo.
-            </p>
-
+            <h2>Build the pathway</h2>
+            <div className="field">
+              <label htmlFor="domain">Domain</label>
+              <select
+                id="domain"
+                className="file-input"
+                value={domain}
+                onChange={(event) => setDomain(event.target.value as Domain)}
+              >
+                <option value="data">Data</option>
+                <option value="swe">SWE</option>
+              </select>
+            </div>
             <div className="upload-grid">
               <div className="field">
                 <label htmlFor="resume-file">Resume upload</label>
@@ -106,87 +145,71 @@ export default function HomePage() {
                 />
                 <textarea
                   className="textarea"
-                  placeholder="Or paste resume text here..."
+                  placeholder="Or paste resume text..."
                   value={resumeText}
                   onChange={(event) => setResumeText(event.target.value)}
                 />
               </div>
-
               <div className="field">
-                <label htmlFor="job-file">Job description upload</label>
+                <label htmlFor="jd-file">Job description upload</label>
                 <input
-                  id="job-file"
+                  id="jd-file"
                   className="file-input"
                   type="file"
                   accept=".pdf,.docx,.txt"
-                  onChange={(event) => setJobFile(event.target.files?.[0] ?? null)}
+                  onChange={(event) => setJdFile(event.target.files?.[0] ?? null)}
                 />
                 <textarea
                   className="textarea"
-                  placeholder="Or paste job description here..."
-                  value={jobText}
-                  onChange={(event) => setJobText(event.target.value)}
+                  placeholder="Or paste job description text..."
+                  value={jdText}
+                  onChange={(event) => setJdText(event.target.value)}
                 />
               </div>
             </div>
-
             <div className="actions" style={{ marginTop: 18 }}>
               <button className="button button-primary" disabled={isPending} onClick={runAnalysis}>
-                {isPending ? "Analyzing..." : "Run SkillGraph"}
+                {isPending ? "Building path..." : "Run SkillGraph"}
               </button>
               <button
                 className="button button-secondary"
                 onClick={() => {
-                  setResumeText("");
-                  setJobText("");
-                  setResumeFile(null);
-                  setJobFile(null);
                   setResult(null);
                   setError(null);
+                  setSampleStory(null);
+                  setResumeFile(null);
+                  setJdFile(null);
+                  setResumeText("");
+                  setJdText("");
                 }}
               >
-                Reset demo
+                Reset
               </button>
             </div>
           </div>
 
           <div className="panel">
-            <p className="section-kicker">Fallback Samples</p>
-            <h2>Demo-safe candidate and role packs</h2>
-            <div className="sample-grid">
-              <div className="grid">
-                {sampleResumes.map((sample) => (
-                  <button
-                    className="sample-button"
-                    key={sample.id}
-                    onClick={() => loadSample(sample.id, "resume")}
-                  >
-                    <strong>{sample.label}</strong>
-                    <p className="muted">Load as candidate profile</p>
-                  </button>
-                ))}
-              </div>
-              <div className="grid">
-                {sampleRoles.map((sample) => (
-                  <button
-                    className="sample-button"
-                    key={sample.id}
-                    onClick={() => loadSample(sample.id, "job")}
-                  >
-                    <strong>{sample.label}</strong>
-                    <p className="muted">Load as target role</p>
-                  </button>
-                ))}
-              </div>
+            <p className="section-kicker">Fixed Demo Inputs</p>
+            <h2>Use the tested scenarios</h2>
+            <div className="grid">
+              {samples.map((sample) => (
+                <button
+                  className="sample-button"
+                  key={sample.id}
+                  onClick={() => loadSampleScenario(sample.id)}
+                >
+                  <strong>{sample.label}</strong>
+                  <p className="muted">{sample.domain.toUpperCase()} domain</p>
+                  <p className="muted">{sample.story}</p>
+                </button>
+              ))}
             </div>
-
-            <div style={{ marginTop: 18 }}>
-              <h3>How it works</h3>
-              <p className="muted">
-                The backend extracts canonical skills, computes mastery from evidence density,
-                identifies missing prerequisites, and returns a reproducible learning roadmap.
-              </p>
-            </div>
+            {sampleStory && (
+              <div className="callout" style={{ marginTop: 18 }}>
+                <strong>Demo story</strong>
+                <p className="muted">{sampleStory}</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -208,13 +231,19 @@ export default function HomePage() {
             <h3>Fallback triggered</h3>
             <p className="muted">{error}</p>
             <div className="badge-row">
-              <span className="pill warn">Try sample inputs</span>
+              <span className="pill warn">Try the fixed demo scenarios</span>
               <span className="pill">Paste text directly</span>
             </div>
           </section>
         )}
 
-        {result && <ResultDashboard result={result} />}
+        {result && (
+          <ResultDashboard
+            result={result}
+            onMarkLearned={markLearned}
+            isRecomputing={isRecomputing}
+          />
+        )}
       </div>
     </main>
   );

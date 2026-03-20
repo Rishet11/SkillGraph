@@ -5,9 +5,11 @@ import { GraphPanel } from "./GraphPanel";
 
 type Props = {
   result: AnalyzeResponse;
+  onMarkLearned: (skill: string) => void;
+  isRecomputing: boolean;
 };
 
-export function ResultDashboard({ result }: Props) {
+export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props) {
   return (
     <section className="grid" style={{ marginTop: 26 }}>
       <div className="panel">
@@ -16,17 +18,22 @@ export function ResultDashboard({ result }: Props) {
         <p className="muted">{result.summary.explanation}</p>
         <div className="score-grid">
           <div className="score-card">
-            <div className="muted">Fit score</div>
-            <div className="value">{result.fit_score}</div>
+            <div className="muted">Gap count</div>
+            <div className="value">{result.gap_count}</div>
           </div>
           <div className="score-card">
-            <div className="muted">Confidence</div>
-            <div className="value">{result.confidence}</div>
+            <div className="muted">Recommended path</div>
+            <div className="value">{result.path.length}</div>
           </div>
           <div className="score-card">
-            <div className="muted">Learning steps</div>
-            <div className="value">{result.learning_path.length}</div>
+            <div className="muted">Redundant modules removed</div>
+            <div className="value">{result.metrics.redundant_modules_eliminated}%</div>
           </div>
+        </div>
+        <div className="badge-row" style={{ marginTop: 18 }}>
+          <span className="pill">Domain: {result.domain.toUpperCase()}</span>
+          <span className="pill">Trace coverage: {result.metrics.reasoning_trace_coverage}%</span>
+          <span className="pill">Naive path: {result.metrics.naive_path_length}</span>
         </div>
         {!!result.warnings.length && (
           <div className="badge-row" style={{ marginTop: 18 }}>
@@ -39,128 +46,92 @@ export function ResultDashboard({ result }: Props) {
         )}
       </div>
 
-      <div className="breakdown-grid">
+      <div className="three-panel">
         <div className="panel">
-          <h3>Matched Skills</h3>
+          <h3>Skill Panel</h3>
           <div className="list">
-            {result.matched_skills.length ? (
-              result.matched_skills.map((skill) => (
-                <div className="list-item" key={skill.skill_id}>
-                  <strong>
-                    {skill.label} · {skill.mastery_score}
-                  </strong>
-                  <div className="pill-list">
-                    <span className={`pill ${skill.status === "matched" ? "good" : ""}`}>{skill.status}</span>
+            {result.all_skills.map((skill) => {
+              const mastery = result.mastery_scores[skill] ?? 0;
+              const inPath = result.path.includes(skill);
+              const isGap = result.gap_skills.includes(skill);
+              return (
+                <div className="list-item" key={skill}>
+                  <div className="skill-row">
+                    <strong>{skill}</strong>
+                    <span className={`pill ${mastery >= 0.8 ? "good" : isGap ? "warn" : ""}`}>
+                      {mastery.toFixed(2)}
+                    </span>
                   </div>
-                  <p className="muted">{skill.reason}</p>
+                  <div className="mastery-track">
+                    <div className="mastery-fill" style={{ width: `${mastery * 100}%` }} />
+                  </div>
+                  <div className="pill-list">
+                    {result.jd_data.required.includes(skill) && <span className="pill">required</span>}
+                    {result.jd_data.preferred.includes(skill) && <span className="pill">preferred</span>}
+                    {inPath && <span className="pill warn">path</span>}
+                    {isGap && <span className="pill warn">gap</span>}
+                  </div>
                 </div>
-              ))
-            ) : (
-              <p className="muted">No strong alignment yet.</p>
-            )}
+              );
+            })}
           </div>
         </div>
 
         <div className="panel">
-          <h3>Missing Skills</h3>
-          <div className="list">
-            {result.missing_skills.length ? (
-              result.missing_skills.map((skill) => (
-                <div className="list-item" key={skill.skill_id}>
-                  <strong>{skill.label}</strong>
-                  <div className="pill-list">
-                    <span className="pill warn">{skill.gap_type}</span>
-                    {skill.missing_prerequisites.map((item) => (
-                      <span className="pill" key={item}>
-                        needs {item.replaceAll("_", " ")}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="muted">{skill.reason}</p>
-                </div>
-              ))
-            ) : (
-              <p className="muted">No major role gaps detected.</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="main-grid grid">
-        <div className="panel">
-          <h3>Skill Graph</h3>
+          <h3>Graph Panel</h3>
           <p className="muted">
-            Current skills, target expectations, prerequisites, and recommendations are connected
-            into one explorable map.
+            Green is mastered, yellow is partial, red is a critical gap, and orange is the selected learning path.
           </p>
           <GraphPanel graph={result.graph} />
         </div>
 
         <div className="panel">
-          <h3>Learning Path</h3>
+          <h3>Path + Reasoning</h3>
           <div className="roadmap">
-            {result.learning_path.map((step) => (
-              <div className="roadmap-step" key={step.skill_id}>
-                <strong>
-                  {step.order}. {step.goal}
-                </strong>
-                <p className="muted">{step.why_now}</p>
-                <div className="pill-list">
-                  {step.recommended_courses.length ? (
-                    step.recommended_courses.map((course) => (
-                      <a className="pill good" href={course.url} key={course.course_id} target="_blank" rel="noreferrer">
-                        {course.title} · {course.duration}
-                      </a>
-                    ))
-                  ) : (
-                    <span className="pill">Add project practice for this skill</span>
-                  )}
+            {result.reasoning.map((trace) => {
+              const course = result.course_map[trace.skill];
+              return (
+                <div className="roadmap-step" key={trace.skill}>
+                  <div className="skill-row">
+                    <strong>
+                      {trace.position}. {trace.skill}
+                    </strong>
+                    <button
+                      className="button button-secondary small-button"
+                      disabled={isRecomputing}
+                      onClick={() => onMarkLearned(trace.skill)}
+                    >
+                      {isRecomputing ? "Updating..." : "Mark learned"}
+                    </button>
+                  </div>
+                  <p className="muted">{trace.reason}</p>
+                  <div className="pill-list">
+                    <span className="pill">mastery {trace.mastery.toFixed(2)}</span>
+                    <span className="pill">priority {trace.priority_score.toFixed(2)}</span>
+                    <span className="pill">depth {trace.downstream_depth}</span>
+                    {trace.required_by_jd && <span className="pill good">required</span>}
+                    {trace.preferred_by_jd && <span className="pill">preferred</span>}
+                  </div>
+                  <div className="pill-list" style={{ marginTop: 10 }}>
+                    {trace.unlocks.map((unlock) => (
+                      <span className="pill" key={unlock}>
+                        unlocks {unlock}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="course-card">
+                    <strong>{course?.name ?? "No course available"}</strong>
+                    <p className="muted">
+                      Covers: {course ? course.covers.join(", ") : trace.skill} · Difficulty{" "}
+                      {course?.difficulty ?? 0}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="main-grid grid">
-        <div className="panel">
-          <h3>Extracted Resume Evidence</h3>
-          <div className="list">
-            {result.resume_skills.map((skill) => (
-              <div className="list-item" key={skill.skill_id}>
-                <strong>
-                  {skill.label} · {skill.mastery_score}
-                </strong>
-                <p className="muted">Source section: {skill.source_section}</p>
-                <div className="pill-list">
-                  {skill.evidence_snippets.map((snippet) => (
-                    <span className="pill" key={snippet}>
-                      {snippet}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel">
-          <h3>Judge-Friendly Explainability</h3>
-          <div className="formula">
-            fit_score = weighted matched skill evidence - missing required skill penalty + adjacency credit
-          </div>
-          <p className="muted" style={{ marginTop: 16 }}>
-            This MVP uses deterministic scoring first. LLM wording can be added later, but the
-            scores, graph, and recommendations remain reproducible.
-          </p>
-          <div className="badge-row">
-            <span className="pill good">Deterministic core</span>
-            <span className="pill">Confidence-aware</span>
-            <span className="pill warn">Local-first demo</span>
+              );
+            })}
           </div>
         </div>
       </div>
     </section>
   );
 }
-
