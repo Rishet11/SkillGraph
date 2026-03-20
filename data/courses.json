@@ -1,0 +1,57 @@
+[
+  {
+    "id": "course-python-analytics",
+    "title": "Python for Data Analysis",
+    "provider": "SkillGraph Academy",
+    "skill_tags": ["python", "sql", "data_visualization"],
+    "difficulty": "foundation",
+    "duration": "4 weeks",
+    "url": "https://example.com/python-for-data-analysis"
+  },
+  {
+    "id": "course-sql-foundations",
+    "title": "SQL Foundations for Analysts",
+    "provider": "SkillGraph Academy",
+    "skill_tags": ["sql"],
+    "difficulty": "foundation",
+    "duration": "2 weeks",
+    "url": "https://example.com/sql-foundations"
+  },
+  {
+    "id": "course-stats-core",
+    "title": "Statistics for Machine Learning",
+    "provider": "SkillGraph Academy",
+    "skill_tags": ["statistics", "machine_learning"],
+    "difficulty": "foundation",
+    "duration": "3 weeks",
+    "url": "https://example.com/statistics-ml"
+  },
+  {
+    "id": "course-bi-dashboards",
+    "title": "Power BI Dashboard Sprint",
+    "provider": "SkillGraph Academy",
+    "skill_tags": ["power_bi", "data_visualization", "excel"],
+    "difficulty": "intermediate",
+    "duration": "2 weeks",
+    "url": "https://example.com/power-bi-dashboard-sprint"
+  },
+  {
+    "id": "course-ml-practice",
+    "title": "Applied Machine Learning with scikit-learn",
+    "provider": "SkillGraph Academy",
+    "skill_tags": ["machine_learning", "scikit_learn", "python"],
+    "difficulty": "intermediate",
+    "duration": "5 weeks",
+    "url": "https://example.com/applied-ml-sklearn"
+  },
+  {
+    "id": "course-llm-product",
+    "title": "LLM Product Patterns",
+    "provider": "SkillGraph Academy",
+    "skill_tags": ["llm_applications", "nlp", "python"],
+    "difficulty": "advanced",
+    "duration": "2 weeks",
+    "url": "https://example.com/llm-product-patterns"
+  }
+]
+

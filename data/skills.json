@@ -1,0 +1,87 @@
+[
+  {
+    "id": "python",
+    "label": "Python",
+    "aliases": ["python", "pandas scripting", "python programming"],
+    "category": "programming",
+    "difficulty": "foundation"
+  },
+  {
+    "id": "sql",
+    "label": "SQL",
+    "aliases": ["sql", "postgresql", "mysql", "queries"],
+    "category": "data",
+    "difficulty": "foundation"
+  },
+  {
+    "id": "statistics",
+    "label": "Statistics",
+    "aliases": ["statistics", "hypothesis testing", "probability", "statistical analysis"],
+    "category": "math",
+    "difficulty": "foundation"
+  },
+  {
+    "id": "excel",
+    "label": "Excel",
+    "aliases": ["excel", "spreadsheets", "google sheets"],
+    "category": "business",
+    "difficulty": "foundation"
+  },
+  {
+    "id": "data_visualization",
+    "label": "Data Visualization",
+    "aliases": ["data visualization", "visualization", "dashboards", "storytelling"],
+    "category": "analytics",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "power_bi",
+    "label": "Power BI",
+    "aliases": ["power bi", "powerbi"],
+    "category": "analytics",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "tableau",
+    "label": "Tableau",
+    "aliases": ["tableau"],
+    "category": "analytics",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "machine_learning",
+    "label": "Machine Learning",
+    "aliases": ["machine learning", "ml", "predictive modeling", "modeling"],
+    "category": "ai",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "scikit_learn",
+    "label": "scikit-learn",
+    "aliases": ["scikit-learn", "sklearn"],
+    "category": "ai",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "deep_learning",
+    "label": "Deep Learning",
+    "aliases": ["deep learning", "neural networks", "tensorflow", "pytorch"],
+    "category": "ai",
+    "difficulty": "advanced"
+  },
+  {
+    "id": "nlp",
+    "label": "NLP",
+    "aliases": ["nlp", "natural language processing", "text mining"],
+    "category": "ai",
+    "difficulty": "advanced"
+  },
+  {
+    "id": "llm_applications",
+    "label": "LLM Applications",
+    "aliases": ["llm", "gpt", "prompt engineering", "rag"],
+    "category": "ai",
+    "difficulty": "advanced"
+  }
+]
+
