@@ -7,5 +7,7 @@ dist
 build
 *.pyc
 frontend/.next
+frontend/tsconfig.tsbuildinfo
 backend/.pytest_cache
 .DS_Store
+SkillGraph_PRD_v2.pdf
