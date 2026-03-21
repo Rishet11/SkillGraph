@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .config import API_VERSION
 from .courses import recommend_course
 from .confidence import apply_adjusters
 from .data_loader import Domain, load_skills
@@ -17,8 +18,6 @@ from .parser import ParsedDocument
 from .reasoning import generate_trace
 from .schemas import AnalyzeResponse, AnalyzeSummary, GapReport, JDData, Metrics, ParseMetadata, ParseResponse, PathwayResponse
 from .skills import classify_jd, classify_resume_skills
-
-API_VERSION = "v1"
 
 
 def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> ParseResponse:

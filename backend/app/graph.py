@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .config import MISSING_GAP_DELTA, PREFERRED_MASTERY_THRESHOLD, REQUIRED_MASTERY_THRESHOLD, WEAK_GAP_DELTA
 from .data_loader import Domain, load_edges, load_skills
 from .mastery import MASTERY_THRESHOLD
 from .nx_compat import nx
@@ -23,8 +24,8 @@ def build_skill_graph(domain: Domain) -> nx.DiGraph:
 
 
 def identify_gaps(all_skills: list[str], mastery_scores: dict[str, float], jd_data: JDData) -> set[str]:
-    required_threshold = max(MASTERY_THRESHOLD, 0.65)
-    preferred_threshold = max(MASTERY_THRESHOLD - 0.1, 0.5)
+    required_threshold = max(MASTERY_THRESHOLD, REQUIRED_MASTERY_THRESHOLD)
+    preferred_threshold = max(MASTERY_THRESHOLD - 0.1, PREFERRED_MASTERY_THRESHOLD)
     gaps: set[str] = set()
     for skill in all_skills:
         mastery = mastery_scores.get(skill, 0.0)
@@ -45,9 +46,9 @@ def compute_gap_report(mastery_scores: dict[str, float], jd_data: JDData) -> dic
         required_level = _required_level(skill, jd_data)
         mastery = mastery_scores.get(skill, 0.0)
         delta = required_level - mastery
-        if delta >= 0.35:
+        if delta >= MISSING_GAP_DELTA:
             missing.append(skill)
-        elif delta >= 0.15:
+        elif delta >= WEAK_GAP_DELTA:
             weak.append(skill)
         else:
             met.append(skill)

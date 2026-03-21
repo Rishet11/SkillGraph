@@ -57,6 +57,12 @@ export SKILLGRAPH_ENABLE_GEMINI=1
 ### Frontend demo mode (optional)
 export NEXT_PUBLIC_DEMO_DOMAIN_ONLY=data
 
+### Optional calibration knobs
+export SKILLGRAPH_REQUIRED_THRESHOLD=0.65
+export SKILLGRAPH_PREFERRED_THRESHOLD=0.50
+export SKILLGRAPH_MISSING_DELTA=0.35
+export SKILLGRAPH_WEAK_DELTA=0.15
+
 ### macOS only (required for LightGBM)
 export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:$DYLD_LIBRARY_PATH"
 
