@@ -2,7 +2,6 @@
 
 import { AnalyzeResponse } from "../lib/types";
 import { GraphPanel } from "./GraphPanel";
-
 import { PillarDashboard } from "./PillarDashboard";
 
 type Props = {
@@ -13,68 +12,59 @@ type Props = {
 
 export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props) {
   return (
-    <section className="grid" style={{ marginTop: 26 }}>
-      <div className="panel">
+    <section className="animate-fade-in stagger-1" style={{ marginTop: 40 }}>
+      {/* Header Info */}
+      <div className="panel" style={{ marginBottom: 24 }}>
         <p className="section-kicker">Analysis Outcome</p>
-        <h2>{result.summary.headline}</h2>
-        <p className="muted">{result.summary.explanation}</p>
+        <h2 style={{ fontSize: "2.5rem", marginBottom: 8 }}>{result.summary.headline}</h2>
+        <p className="muted" style={{ fontSize: "1.1rem", marginBottom: 24 }}>{result.summary.explanation}</p>
         
         <PillarDashboard pillars={result.pillars} />
 
         <div className="score-grid">
-          <div className="score-card">
-            <div className="muted">Gap count</div>
+          <div className="score-card panel">
+            <div className="muted" style={{ fontSize: "0.9rem" }}>Skill Gaps</div>
             <div className="value">{result.gap_count}</div>
           </div>
-          <div className="score-card">
-            <div className="muted">Recommended path</div>
+          <div className="score-card panel">
+            <div className="muted" style={{ fontSize: "0.9rem" }}>Path Steps</div>
             <div className="value">{result.path.length}</div>
           </div>
-          <div className="score-card">
-            <div className="muted">Redundant modules removed</div>
+          <div className="score-card panel">
+            <div className="muted" style={{ fontSize: "0.9rem" }}>Redundancy Eliminated</div>
             <div className="value">{result.metrics.redundant_modules_eliminated}%</div>
           </div>
         </div>
-        <div className="badge-row" style={{ marginTop: 18 }}>
-          <span className="pill">Domain: {result.domain.toUpperCase()}</span>
+        
+        <div className="badge-row" style={{ marginTop: 24 }}>
+          <span className="pill good">Domain: {result.domain.toUpperCase()}</span>
           <span className="pill">Trace coverage: {result.metrics.reasoning_trace_coverage}%</span>
           <span className="pill">Naive path: {result.metrics.naive_path_length}</span>
         </div>
-        {!!result.warnings.length && (
-          <div className="badge-row" style={{ marginTop: 18 }}>
-            {result.warnings.map((warning) => (
-              <span className="pill warn" key={warning}>
-                {warning}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="three-panel">
+        {/* Left: Skill Status */}
         <div className="panel">
-          <h3>Skill Panel</h3>
+          <h3>Skill Inventory</h3>
           <div className="list">
             {result.all_skills.map((skill) => {
               const mastery = result.mastery_scores[skill] ?? 0;
-              const inPath = result.path.includes(skill);
               const isGap = result.gap_skills.includes(skill);
               return (
                 <div className="list-item" key={skill}>
                   <div className="skill-row">
-                    <strong>{skill}</strong>
+                    <span style={{ fontWeight: 600 }}>{skill}</span>
                     <span className={`pill ${mastery >= 0.8 ? "good" : isGap ? "warn" : ""}`}>
-                      {mastery.toFixed(2)}
+                      {(mastery * 100).toFixed(0)}%
                     </span>
                   </div>
                   <div className="mastery-track">
                     <div className="mastery-fill" style={{ width: `${mastery * 100}%` }} />
                   </div>
                   <div className="pill-list">
-                    {result.jd_data.required.includes(skill) && <span className="pill">required</span>}
-                    {result.jd_data.preferred.includes(skill) && <span className="pill">preferred</span>}
-                    {inPath && <span className="pill warn">path</span>}
-                    {isGap && <span className="pill warn">gap</span>}
+                    {result.jd_data.required.includes(skill) && <span className="pill" style={{fontSize: '0.7rem'}}>required</span>}
+                    {isGap && <span className="pill warn" style={{fontSize: '0.7rem'}}>gap</span>}
                   </div>
                 </div>
               );
@@ -82,59 +72,55 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
           </div>
         </div>
 
+        {/* Middle: Interactive Graph */}
         <div className="panel">
-          <h3>Graph Panel</h3>
-          <p className="muted">
-            Green is mastered, yellow is partial, red is a critical gap, and orange is the selected learning path.
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+             <h3>Skill Architecture</h3>
+             <span className="pill" style={{ fontSize: '0.7rem', opacity: 0.7 }}>Interactive</span>
+          </div>
+          <p className="muted" style={{ fontSize: '0.85rem', marginBottom: 16 }}>
+            Explore dependencies. Emerald nodes are mastered, Red are critical gaps, Violet is your personalized path.
           </p>
-          <GraphPanel graph={result.graph} />
+          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '24px', padding: '8px', border: '1px solid var(--panel-border)' }}>
+            <GraphPanel graph={result.graph} />
+          </div>
         </div>
 
+        {/* Right: Path Reasoning */}
         <div className="panel">
-          <h3>Path + Reasoning</h3>
+          <h3>Adaptive Roadmap</h3>
           <div className="roadmap animate-fade-in stagger-2">
             {result.reasoning.map((trace, idx) => {
               const course = result.course_map[trace.skill];
               return (
                 <div 
-                  className={`roadmap-step animate-fade-in`} 
+                  className="roadmap-step animate-fade-in" 
                   key={trace.skill}
                   style={{ animationDelay: `${0.1 * idx}s` }}
                 >
-                  <div className="skill-row">
-                    <strong>
+                  <div className="skill-row" style={{ marginBottom: 12 }}>
+                    <strong style={{ color: 'var(--secondary)' }}>
                       {trace.position}. {trace.skill}
                     </strong>
                     <button
                       className="button button-secondary small-button"
                       disabled={isRecomputing}
                       onClick={() => onMarkLearned(trace.skill)}
+                      style={{ fontSize: '0.75rem' }}
                     >
-                      {isRecomputing ? "Updating..." : "Mark learned"}
+                      {isRecomputing ? "..." : "Learn"}
                     </button>
                   </div>
-                  <p className="muted">{trace.reason}</p>
-                  <div className="pill-list">
-                    <span className="pill">mastery {trace.mastery.toFixed(2)}</span>
-                    <span className="pill">priority {trace.priority_score.toFixed(2)}</span>
-                    <span className="pill">depth {trace.downstream_depth}</span>
-                    {trace.required_by_jd && <span className="pill good">required</span>}
-                    {trace.preferred_by_jd && <span className="pill">preferred</span>}
-                  </div>
-                  <div className="pill-list" style={{ marginTop: 10 }}>
-                    {trace.unlocks.map((unlock) => (
-                      <span className="pill" key={unlock}>
-                        unlocks {unlock}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="course-card">
-                    <strong>{course?.name ?? "No course available"}</strong>
-                    <p className="muted">
-                      Covers: {course ? course.covers.join(", ") : trace.skill} · Difficulty{" "}
-                      {course?.difficulty ?? 0}
-                    </p>
-                  </div>
+                  <p className="muted" style={{ fontSize: '0.9rem', marginBottom: 12 }}>{trace.reason}</p>
+                  
+                  {course && (
+                    <div className="course-card" style={{ background: 'var(--panel-strong)', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>{course.name}</div>
+                      <div className="muted" style={{ fontSize: '0.75rem' }}>
+                        Diff: {course.difficulty}/10 · {course.url.split('/')[2]}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

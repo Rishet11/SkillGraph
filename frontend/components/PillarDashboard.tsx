@@ -10,17 +10,18 @@ export function PillarDashboard({ pillars }: Props) {
   if (!pillars || Object.keys(pillars).length === 0) return null;
 
   return (
-    <div className="pillar-dashboard mb-8">
-      <h3 className="text-xl font-bold mb-4 text-[#1d1f33]/80">Skill Pillars</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="pillar-dashboard mb-8 animate-fade-in stagger-2">
+      <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>Skill Pillars</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.entries(pillars).map(([pillar, skills]) => (
-          <div key={pillar} className="pillar-card p-4 rounded-xl bg-white border border-[#1d1f33]/10 shadow-sm">
-            <h4 className="font-bold text-[#C84B1E] mb-2">{pillar}</h4>
+          <div key={pillar} className="pillar-card panel" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+            <h4 className="font-bold mb-3" style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>{pillar}</h4>
             <div className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <span 
                   key={skill} 
-                  className="px-2 py-1 text-xs font-medium rounded-full bg-[#1d1f33]/5 text-[#1d1f33]/70 border border-[#1d1f33]/10"
+                  className="pill"
+                  style={{ fontSize: '0.7rem', background: 'rgba(139, 92, 246, 0.1)', borderColor: 'rgba(139, 92, 246, 0.2)' }}
                 >
                   {skill}
                 </span>

@@ -6,10 +6,10 @@ import { ResultDashboard } from "../components/ResultDashboard";
 import { analyzeFiles, fetchSampleContent, fetchSamples, recomputePath } from "../lib/api";
 import { AnalyzeResponse, Domain, SampleScenario } from "../lib/types";
 
-const loadingSteps = ["Parsing", "Scoring mastery", "Building gap graph", "Prioritizing path", "Writing trace"];
+const loadingSteps = ["Parsing Deeply", "Scoring mastery", "Mapping gap graph", "Prioritizing path", "Writing trace"];
 
 export default function HomePage() {
-  const [domain, setDomain] = useState<Domain>("data");
+  const [domain, setDomain] = useState<Domain>("swe");
   const [resumeText, setResumeText] = useState("");
   const [jdText, setJdText] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -52,12 +52,12 @@ export default function HomePage() {
     setResumeFile(null);
     setJdFile(null);
     setSampleStory(scenario.story);
+    // Auto-scroll to inputs
+    window.scrollTo({ top: 600, behavior: 'smooth' });
   };
 
   const markLearned = (skill: string) => {
-    if (!result) {
-      return;
-    }
+    if (!result) return;
     startRecompute(async () => {
       try {
         const updated = await recomputePath({
@@ -91,96 +91,83 @@ export default function HomePage() {
   return (
     <main className="page-shell">
       <div className="container">
-        <section className="hero">
-          <div className="hero-grid">
-            <div>
-              <p className="hero-kicker">SkillGraph</p>
-              <h1>Explainable adaptive onboarding</h1>
-              <p className="hero-copy">
-                Parse a resume and job description, classify skills into a fixed taxonomy, compute mastery, identify the gap subgraph, and generate a deterministic learning path with a visible reasoning trace.
-              </p>
-            </div>
-            <div className="hero-stats">
+        {/* Cinematic Hero */}
+        <section className="hero animate-fade-in stagger-1">
+          <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
+            <p className="section-kicker">Next-Gen Career Intelligence</p>
+            <h1>SkillGraph <span style={{ color: 'var(--secondary)' }}>v2</span></h1>
+            <p className="hero-copy" style={{ margin: '0 auto 40px' }}>
+              Bridging the gap between your current expertise and your next big role with explainable, deterministic learning pathways.
+            </p>
+            
+            <div className="hero-stats" style={{ justifyContent: 'center' }}>
               <div className="stat-card">
-                <span className="muted">Domains</span>
-                <strong>SWE + Data</strong>
+                <span className="muted">Processing Engine</span>
+                <strong>Gemini + BERT</strong>
               </div>
               <div className="stat-card">
-                <span className="muted">Adaptive proof</span>
-                <strong>Mark learned</strong>
+                <span className="muted">Visualization</span>
+                <strong>React Flow</strong>
               </div>
               <div className="stat-card">
-                <span className="muted">Grounding</span>
-                <strong>Fixed catalog</strong>
+                <span className="muted">Stability</span>
+                <strong>Python 3.13</strong>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="main-grid grid">
+        {/* Input & Scenarios Section */}
+        <section className="main-grid grid animate-fade-in stagger-2">
           <div className="panel">
-            <p className="section-kicker">Input</p>
-            <h2>Build the pathway</h2>
-            <div className="field">
-              <label htmlFor="domain">Domain</label>
-              <select
-                id="domain"
-                className="file-input"
-                value={domain}
-                onChange={(event) => setDomain(event.target.value as Domain)}
-              >
-                <option value="data">Data</option>
-                <option value="swe">SWE</option>
-              </select>
-            </div>
-            <div className="upload-grid">
+            <p className="section-kicker">Workspace</p>
+            <h2>Analysis Engine</h2>
+            
+            <div className="grid" style={{ marginTop: 20 }}>
               <div className="field">
-                <label htmlFor="resume-file">Resume upload</label>
-                <input
-                  id="resume-file"
+                <label>Target career domain</label>
+                <select
                   className="file-input"
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={(event) => setResumeFile(event.target.files?.[0] ?? null)}
-                />
-                <textarea
-                  className="textarea"
-                  placeholder="Or paste resume text..."
-                  value={resumeText}
-                  onChange={(event) => setResumeText(event.target.value)}
-                />
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value as Domain)}
+                >
+                  <option value="swe">Software Engineering</option>
+                  <option value="data">Data Science & AI</option>
+                </select>
               </div>
-              <div className="field">
-                <label htmlFor="jd-file">Job description upload</label>
-                <input
-                  id="jd-file"
-                  className="file-input"
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={(event) => setJdFile(event.target.files?.[0] ?? null)}
-                />
-                <textarea
-                  className="textarea"
-                  placeholder="Or paste job description text..."
-                  value={jdText}
-                  onChange={(event) => setJdText(event.target.value)}
-                />
+
+              <div className="upload-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="field">
+                  <label>Your Resume</label>
+                  <textarea
+                    className="textarea"
+                    placeholder="Paste resume content..."
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    style={{ minHeight: '120px' }}
+                  />
+                </div>
+                <div className="field">
+                  <label>Target Job Description</label>
+                  <textarea
+                    className="textarea"
+                    placeholder="Paste JD content..."
+                    value={jdText}
+                    onChange={(e) => setJdText(e.target.value)}
+                    style={{ minHeight: '120px' }}
+                  />
+                </div>
               </div>
             </div>
-            <div className="actions" style={{ marginTop: 18 }}>
-              <button className="button button-primary" disabled={isPending} onClick={runAnalysis}>
-                {isPending ? "Building path..." : "Run SkillGraph"}
+
+            <div className="actions" style={{ marginTop: 24 }}>
+              <button className="button button-primary" disabled={isPending} onClick={runAnalysis} style={{ width: '100%' }}>
+                {isPending ? "Generating Insight..." : "Run SkillGraph Engine"}
               </button>
               <button
                 className="button button-secondary"
                 onClick={() => {
-                  setResult(null);
-                  setError(null);
-                  setSampleStory(null);
-                  setResumeFile(null);
-                  setJdFile(null);
-                  setResumeText("");
-                  setJdText("");
+                  setResult(null); setError(null); setResumeText(""); setJdText("");
                 }}
               >
                 Reset
@@ -189,36 +176,31 @@ export default function HomePage() {
           </div>
 
           <div className="panel">
-            <p className="section-kicker">Fixed Demo Inputs</p>
-            <h2>Use the tested scenarios</h2>
+            <p className="section-kicker">Library</p>
+            <h2>Verified Scenarios</h2>
             <div className="grid">
               {samples.map((sample) => (
                 <button
                   className="sample-button"
                   key={sample.id}
                   onClick={() => loadSampleScenario(sample.id)}
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--panel-border)' }}
                 >
-                  <strong>{sample.label}</strong>
-                  <p className="muted">{sample.domain.toUpperCase()} domain</p>
-                  <p className="muted">{sample.story}</p>
+                  <div style={{ color: 'var(--secondary)', fontWeight: 700, marginBottom: 4 }}>{sample.label}</div>
+                  <p className="muted" style={{ fontSize: '0.85rem' }}>{sample.story}</p>
                 </button>
               ))}
             </div>
-            {sampleStory && (
-              <div className="callout" style={{ marginTop: 18 }}>
-                <strong>Demo story</strong>
-                <p className="muted">{sampleStory}</p>
-              </div>
-            )}
           </div>
         </section>
 
+        {/* Luminous Loading State */}
         {isPending && (
-          <section className="panel" style={{ marginTop: 26 }}>
-            <p className="section-kicker">Live Progress</p>
-            <div className="loading-steps">
-              {loadingSteps.map((step) => (
-                <span className="loading-step" key={step}>
+          <section className="panel animate-fade-in" style={{ marginTop: 26, textAlign: 'center', border: '1px solid var(--primary)' }}>
+            <p className="section-kicker">Engine is running...</p>
+            <div className="loading-steps" style={{ justifyContent: 'center', marginTop: 16 }}>
+              {loadingSteps.map((step, i) => (
+                <span className="loading-step" key={step} style={{ animationDelay: `${i * 0.2}s`, background: 'var(--primary-glow)', border: '1px solid var(--primary)' }}>
                   {step}
                 </span>
               ))}
@@ -227,16 +209,13 @@ export default function HomePage() {
         )}
 
         {error && (
-          <section className="panel" style={{ marginTop: 26 }}>
-            <h3>Fallback triggered</h3>
+          <section className="panel" style={{ marginTop: 26, border: '1px solid var(--error)' }}>
+            <h3>Engine Fallback</h3>
             <p className="muted">{error}</p>
-            <div className="badge-row">
-              <span className="pill warn">Try the fixed demo scenarios</span>
-              <span className="pill">Paste text directly</span>
-            </div>
           </section>
         )}
 
+        {/* Dashboard Placeholder/Result */}
         {result && (
           <ResultDashboard
             result={result}
@@ -248,4 +227,3 @@ export default function HomePage() {
     </main>
   );
 }
-
