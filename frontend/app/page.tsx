@@ -7,9 +7,12 @@ import { analyzeFiles, fetchSampleContent, fetchSamples, recomputePath } from ".
 import { AnalyzeResponse, Domain, SampleScenario } from "../lib/types";
 
 const loadingSteps = ["Parsing", "Scoring mastery", "Building gap graph", "Prioritizing path", "Writing trace"];
+const domainOptions: Domain[] = ["data", "swe"];
+const demoDomainOnly = (process.env.NEXT_PUBLIC_DEMO_DOMAIN_ONLY ?? "").toLowerCase() as Domain | "";
 
 export default function HomePage() {
-  const [domain, setDomain] = useState<Domain>("data");
+  const initialDomain = demoDomainOnly === "data" || demoDomainOnly === "swe" ? demoDomainOnly : "data";
+  const [domain, setDomain] = useState<Domain>(initialDomain);
   const [resumeText, setResumeText] = useState("");
   const [jdText, setJdText] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -24,6 +27,9 @@ export default function HomePage() {
   useEffect(() => {
     fetchSamples().then(setSamples).catch(() => undefined);
   }, []);
+
+  const availableDomains = demoDomainOnly ? [demoDomainOnly] : domainOptions;
+  const visibleSamples = demoDomainOnly ? samples.filter((sample) => sample.domain === demoDomainOnly) : samples;
 
   const runAnalysis = () => {
     setError(null);
@@ -125,16 +131,19 @@ export default function HomePage() {
             <h2>Build the pathway</h2>
             <div className="field">
               <label htmlFor="domain">Domain</label>
-              <select
-                id="domain"
-                className="file-input"
-                value={domain}
-                onChange={(event) => setDomain(event.target.value as Domain)}
-              >
-                <option value="data">Data</option>
-                <option value="swe">SWE</option>
-              </select>
-            </div>
+                <select
+                  id="domain"
+                  className="file-input"
+                  value={domain}
+                  onChange={(event) => setDomain(event.target.value as Domain)}
+                >
+                  {availableDomains.map((item) => (
+                    <option value={item} key={item}>
+                      {item === "data" ? "Data" : "SWE"}
+                    </option>
+                  ))}
+                </select>
+              </div>
             <div className="upload-grid">
               <div className="field">
                 <label htmlFor="resume-file">Resume upload</label>
@@ -194,7 +203,7 @@ export default function HomePage() {
             <p className="section-kicker">Fixed Demo Inputs</p>
             <h2>Use the tested scenarios</h2>
             <div className="grid">
-              {samples.map((sample) => (
+              {visibleSamples.map((sample) => (
                 <button
                   className="sample-button"
                   key={sample.id}

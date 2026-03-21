@@ -54,6 +54,9 @@ cd backend && .venv/bin/python scripts/smoke_mvp.py
 export GEMINI_API_KEY=your_key
 export SKILLGRAPH_ENABLE_GEMINI=1
 
+### Frontend demo mode (optional)
+export NEXT_PUBLIC_DEMO_DOMAIN_ONLY=data
+
 ### macOS only (required for LightGBM)
 export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:$DYLD_LIBRARY_PATH"
 

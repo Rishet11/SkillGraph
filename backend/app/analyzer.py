@@ -136,6 +136,9 @@ def analyze_documents(domain: Domain, resume: ParsedDocument, jd: ParsedDocument
         headline = "Large role gap with clear dependency path"
     elif pathway.gap_count >= 4:
         headline = "Moderate skill gap with focused ramp plan"
+    if not pathway.path:
+        warnings.append("No learning steps were generated. Try adding stricter JD requirements or richer resume/JD text.")
+        headline = "No pathway generated from current input"
     return AnalyzeResponse(
         api_version=API_VERSION,
         domain=domain,
