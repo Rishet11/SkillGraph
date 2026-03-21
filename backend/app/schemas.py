@@ -31,11 +31,14 @@ class ResumeSkill(BaseModel):
     in_recent_experience: bool
     source_sections: list[str] = Field(default_factory=list)
     evidence_score: float = 0.0
+    evidence_snippets: list[str] = Field(default_factory=list)
 
 
 class JDData(BaseModel):
     required: list[str]
     preferred: list[str]
+    required_evidence: dict[str, list[str]] = Field(default_factory=dict)
+    preferred_evidence: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class ParseResponse(BaseModel):

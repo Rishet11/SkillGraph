@@ -74,6 +74,19 @@ def _count_alias_hits(text: str, aliases: list[str]) -> int:
     return mentions
 
 
+def _extract_matching_snippets(text: str, aliases: list[str], limit: int = 3) -> list[str]:
+    snippets: list[str] = []
+    for raw_line in text.split("\n"):
+        line = raw_line.strip()
+        if not line:
+            continue
+        if any(re.search(rf"\b{re.escape(alias)}\b", line, re.IGNORECASE) for alias in aliases):
+            snippets.append(line)
+        if len(snippets) >= limit:
+            break
+    return snippets
+
+
 def classify_resume_skills(
     resume_text: str,
     domain: Domain,
@@ -107,6 +120,7 @@ def classify_resume_skills(
         section_hits: dict[str, int] = {}
         weighted_hits = 0.0
         recent = False
+        snippets: list[str] = []
 
         for section_name, section_text in sections.items():
             hits = _count_alias_hits(section_text, skill_aliases)
@@ -114,6 +128,9 @@ def classify_resume_skills(
                 continue
             section_hits[section_name] = hits
             weighted_hits += hits * RESUME_SECTION_WEIGHTS.get(section_name, 0.8)
+            for snippet in _extract_matching_snippets(section_text, skill_aliases, limit=2):
+                if snippet not in snippets:
+                    snippets.append(snippet)
 
         all_matches = []
         for alias in skill_aliases:
@@ -135,6 +152,7 @@ def classify_resume_skills(
                     "in_recent_experience": recent,
                     "source_sections": source_sections,
                     "evidence_score": round(evidence_score, 3),
+                    "evidence_snippets": snippets[:3],
                 }
             )
 
@@ -186,18 +204,28 @@ def classify_jd(
 
     required: list[str] = []
     preferred: list[str] = []
+    required_evidence: dict[str, list[str]] = {}
+    preferred_evidence: dict[str, list[str]] = {}
     for skill, skill_aliases in aliases.items():
         if contains_any(required_block, skill_aliases):
             required.append(skill)
+            required_evidence[skill] = _extract_matching_snippets(required_block, skill_aliases, limit=2)
         elif contains_any(preferred_block, skill_aliases):
             preferred.append(skill)
+            preferred_evidence[skill] = _extract_matching_snippets(preferred_block, skill_aliases, limit=2)
 
     if not required and not preferred:
         for skill, skill_aliases in aliases.items():
             if contains_any(lowered, skill_aliases):
                 preferred.append(skill)
+                preferred_evidence[skill] = _extract_matching_snippets(lowered, skill_aliases, limit=2)
 
-    return JDData(required=required, preferred=preferred)
+    return JDData(
+        required=required,
+        preferred=preferred,
+        required_evidence=required_evidence,
+        preferred_evidence=preferred_evidence,
+    )
 
 
 def contains_any(text: str, aliases: list[str]) -> bool:

@@ -16,11 +16,14 @@ export type ResumeSkill = {
   in_recent_experience: boolean;
   source_sections: string[];
   evidence_score: number;
+  evidence_snippets: string[];
 };
 
 export type JDData = {
   required: string[];
   preferred: string[];
+  required_evidence: Record<string, string[]>;
+  preferred_evidence: Record<string, string[]>;
 };
 
 export type Course = {
@@ -48,7 +51,9 @@ export type TraceItem = {
   evidence: {
     resume_mentions: number;
     resume_sections: string[];
+    resume_snippets: string[];
     jd_signal: string;
+    jd_snippets: string[];
   };
 };
 
