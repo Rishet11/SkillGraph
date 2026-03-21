@@ -32,12 +32,14 @@ def test_parse_and_pathway_are_deterministic_for_data_demo():
     parsed_twice = client.post("/parse", json=parse_payload)
     assert parsed_once.status_code == 200
     assert parsed_once.json() == parsed_twice.json()
+    assert parsed_once.json()["api_version"] == "v1"
 
     pathway_input = parsed_once.json()
     pathway_once = client.post("/pathway", json=pathway_input)
     pathway_twice = client.post("/pathway", json=pathway_input)
     assert pathway_once.status_code == 200
     assert pathway_once.json() == pathway_twice.json()
+    assert pathway_once.json()["api_version"] == "v1"
 
 
 def test_swe_path_respects_expected_start():
@@ -52,6 +54,7 @@ def test_swe_path_respects_expected_start():
     )
     assert response.status_code == 200
     body = response.json()
+    assert body["api_version"] == "v1"
     assert body["domain"] == "swe"
     assert body["gap_count"] >= 4
     path = body["path"]
@@ -170,3 +173,18 @@ def test_keyword_fallback_on_invalid_gemini_response(monkeypatch):
     skill_list = load_skills("data")
     for item in result:
         assert item["skill"] in skill_list
+
+
+def test_parse_warns_when_jd_skills_cannot_be_detected():
+    response = client.post(
+        "/parse",
+        json={
+            "domain": "data",
+            "resume_text": "Skills\nPython\nPandas\nProjects\nBuilt an ETL script.",
+            "jd_text": "We are hiring a collaborative teammate with ownership mindset and communication.",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    jd_warnings = body["parse_metadata"]["jd"]["warnings"]
+    assert any("No JD skills were detected" in warning for warning in jd_warnings)

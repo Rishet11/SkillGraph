@@ -31,6 +31,7 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
           </div>
         </div>
         <div className="badge-row" style={{ marginTop: 18 }}>
+          <span className="pill">API: {result.api_version}</span>
           <span className="pill">Domain: {result.domain.toUpperCase()}</span>
           <span className="pill">Trace coverage: {result.metrics.reasoning_trace_coverage}%</span>
           <span className="pill">Naive path: {result.metrics.naive_path_length}</span>

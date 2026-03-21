@@ -18,13 +18,22 @@ from .reasoning import generate_trace
 from .schemas import AnalyzeResponse, AnalyzeSummary, GapReport, JDData, Metrics, ParseMetadata, ParseResponse, PathwayResponse
 from .skills import classify_jd, classify_resume_skills
 
+API_VERSION = "v1"
+
 
 def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> ParseResponse:
     resume_skills = classify_resume_skills(resume.text, domain, resume.sections)
     jd_data = classify_jd(jd.text, domain, jd.sections)
     mastery_scores = compute_mastery_scores(load_skills(domain), resume_skills, jd_data)
     mastery_scores, adjuster_notes = apply_adjusters(mastery_scores, domain, resume_skills, jd_data)
+    resume_warnings = list(resume.warnings)
+    jd_warnings = [*jd.warnings, *adjuster_notes]
+    if not resume_skills:
+        resume_warnings.append("No skills were extracted from the resume. Add clearer skill bullets or use paste text.")
+    if not jd_data.required and not jd_data.preferred:
+        jd_warnings.append("No JD skills were detected. Include explicit requirements/preferred sections for better matching.")
     return ParseResponse(
+        api_version=API_VERSION,
         domain=domain,
         resume_skills=resume_skills,
         jd_data=jd_data,
@@ -34,7 +43,7 @@ def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> Par
                 source=resume.source,
                 filename=resume.filename,
                 characters=len(resume.text),
-                warnings=resume.warnings,
+                warnings=resume_warnings,
                 extraction_method=resume.extraction_method,
                 sections_detected=sorted((resume.sections or {}).keys()),
                 section_character_counts={
@@ -46,7 +55,7 @@ def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> Par
                 source=jd.source,
                 filename=jd.filename,
                 characters=len(jd.text),
-                warnings=[*jd.warnings, *adjuster_notes],
+                warnings=jd_warnings,
                 extraction_method=jd.extraction_method,
                 sections_detected=sorted((jd.sections or {}).keys()),
                 section_character_counts={
@@ -93,6 +102,7 @@ def run_pathway(domain: Domain, resume_skills: list[dict], jd_data: JDData, mast
         reasoning_trace_coverage=100 if len(reasoning) == len(path) else 0,
     )
     return PathwayResponse(
+        api_version=API_VERSION,
         path=path,
         reasoning=reasoning,
         course_map=course_map,
@@ -127,6 +137,7 @@ def analyze_documents(domain: Domain, resume: ParsedDocument, jd: ParsedDocument
     elif pathway.gap_count >= 4:
         headline = "Moderate skill gap with focused ramp plan"
     return AnalyzeResponse(
+        api_version=API_VERSION,
         domain=domain,
         all_skills=load_skills(domain),
         resume_skills=parsed.resume_skills,

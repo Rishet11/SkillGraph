@@ -69,6 +69,7 @@ export default function HomePage() {
         });
         setResult({
           ...result,
+          api_version: updated.api_version,
           mastery_scores: updated.mastery_scores,
           path: updated.path,
           reasoning: updated.reasoning,

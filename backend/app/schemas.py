@@ -42,6 +42,7 @@ class JDData(BaseModel):
 
 
 class ParseResponse(BaseModel):
+    api_version: str = "v1"
     domain: Domain
     resume_skills: list[ResumeSkill]
     jd_data: JDData
@@ -111,6 +112,7 @@ class GapReport(BaseModel):
 
 
 class PathwayResponse(BaseModel):
+    api_version: str = "v1"
     path: list[str]
     reasoning: list[TraceItem]
     course_map: dict[str, Course]
@@ -129,6 +131,7 @@ class AnalyzeSummary(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
+    api_version: str = "v1"
     domain: Domain
     all_skills: list[str]
     resume_skills: list[ResumeSkill]

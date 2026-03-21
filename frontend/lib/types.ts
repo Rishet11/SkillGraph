@@ -83,6 +83,7 @@ export type Metrics = {
 };
 
 export type AnalyzeResponse = {
+  api_version: string;
   domain: Domain;
   all_skills: string[];
   resume_skills: ResumeSkill[];
@@ -108,6 +109,7 @@ export type AnalyzeResponse = {
 };
 
 export type PathwayResponse = {
+  api_version: string;
   path: string[];
   reasoning: TraceItem[];
   course_map: Record<string, Course>;

@@ -5,13 +5,13 @@ SkillGraph parses a resume and job description, computes a personalized skill ga
 
 ## Architecture
 Layer 1: Gemini 1.5 Flash — skill classification from resume and JD text (classifier only)
-Layer 2: Mastery Scoring — deterministic formula: 0.35*frequency + 0.35*recency + 0.30*jd_match
-Layer 3: Gap Identification — NetworkX DAG subgraph of skills where mastery < 0.6 AND required by JD
+Layer 2: Mastery Scoring — deterministic formula: 0.45*evidence + 0.35*recency + 0.20*jd_match
+Layer 3: Gap Identification — structured gap report (missing/weak/met) + prerequisite-aware DAG subgraph
 Layer 4: Node2Vec GNN — trained on skill dependency DAG, produces structural importance score per skill
 Layer 5: LightGBM Ranker — LambdaRank trained on 500 synthetic profiles, scores skill priority
 Layer 6: Greedy Frontier Traversal — original adaptive logic, prerequisite-safe path generation
 Layer 7: Course Mapping — fixed catalog lookup, maximizes gap skill coverage per step
-Layer 8: Deterministic Reasoning Trace — rule-based explanation per path node, no LLM involved
+Layer 8: Deterministic Reasoning Trace — rule-based explanation + reason codes + source evidence snippets
 
 ## Models Used
 - Node2Vec (trained): unsupervised GNN on skill dependency DAG, 64-dim embeddings, L2 norm as structural importance score. Trained on O*NET-derived skill graphs for SWE and Data domains.
@@ -25,15 +25,15 @@ Layer 8: Deterministic Reasoning Trace — rule-based explanation per path node,
 - Synthetic path data: 500 candidate profiles generated from graph algorithm. Used as LightGBM LambdaRank training data.
 
 ## Skill-Gap Analysis Logic
-Mastery(s) = 0.35 * frequency + 0.35 * recency + 0.30 * jd_match
-Gap: skill in JD AND mastery < 0.6
+Mastery(s) = 0.45 * evidence + 0.35 * recency + 0.20 * jd_match
+Gap classes: missing / weak / met based on required-level delta
 Priority(s) = LightGBM([jd_importance, gnn_score, mastery, in_degree, out_degree])
 Path: greedy frontier traversal — pick highest-priority node with all prerequisites satisfied
 
 ## Setup
 
-### 1. Install backend dependencies
-cd backend && pip install -r requirements.txt
+### 1. Install backend dependencies (recommended: venv)
+cd backend && python -m venv .venv && .venv/bin/python -m pip install fastapi uvicorn python-multipart pydantic pytest httpx pypdf python-docx networkx numpy
 
 ### 2. Install frontend dependencies
 cd frontend && npm install
@@ -42,12 +42,15 @@ cd frontend && npm install
 bash backend/training/run_all_training.sh
 
 ### 4. Start backend
-cd backend && uvicorn app.main:app --reload
+cd backend && .venv/bin/uvicorn app.main:app --reload
 
 ### 5. Start frontend
 cd frontend && npm run dev
 
-### 6. Environment variables (optional — enables Gemini)
+### 6. MVP smoke test
+cd backend && .venv/bin/python scripts/smoke_mvp.py
+
+### 7. Environment variables (optional — enables Gemini)
 export GEMINI_API_KEY=your_key
 export SKILLGRAPH_ENABLE_GEMINI=1
 
