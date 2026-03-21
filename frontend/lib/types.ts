@@ -5,12 +5,17 @@ export type ParseMetadata = {
   filename?: string | null;
   characters: number;
   warnings: string[];
+  extraction_method: string;
+  sections_detected: string[];
+  section_character_counts: Record<string, number>;
 };
 
 export type ResumeSkill = {
   skill: string;
   mentions: number;
   in_recent_experience: boolean;
+  source_sections: string[];
+  evidence_score: number;
 };
 
 export type JDData = {
@@ -31,12 +36,26 @@ export type TraceItem = {
   skill: string;
   position: number;
   mastery: number;
+  required_level: number;
+  gap: number;
   priority_score: number;
   required_by_jd: boolean;
   preferred_by_jd: boolean;
+  reason_codes: string[];
   unlocks: string[];
   downstream_depth: number;
   reason: string;
+  evidence: {
+    resume_mentions: number;
+    resume_sections: string[];
+    jd_signal: string;
+  };
+};
+
+export type GapReport = {
+  missing: string[];
+  weak: string[];
+  met: string[];
 };
 
 export type GraphNode = {
@@ -69,6 +88,7 @@ export type AnalyzeResponse = {
   course_map: Record<string, Course>;
   gap_count: number;
   gap_skills: string[];
+  gap_report: GapReport;
   graph: {
     nodes: GraphNode[];
     edges: GraphEdge[];
@@ -89,6 +109,7 @@ export type PathwayResponse = {
   mastery_scores: Record<string, number>;
   gap_count: number;
   gap_skills: string[];
+  gap_report: GapReport;
   domain: Domain;
   graph: {
     nodes: GraphNode[];
@@ -109,4 +130,3 @@ export type SampleScenarioDetail = SampleScenario & {
   jd_text: string;
   expected_path_start: string[];
 };
-

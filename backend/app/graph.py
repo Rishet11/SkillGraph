@@ -6,6 +6,14 @@ from .nx_compat import nx
 from .schemas import JDData
 
 
+def _required_level(skill: str, jd_data: JDData) -> float:
+    if skill in jd_data.required:
+        return 1.0
+    if skill in jd_data.preferred:
+        return 0.6
+    return 0.5
+
+
 def build_skill_graph(domain: Domain) -> nx.DiGraph:
     graph = nx.DiGraph()
     skills = load_skills(domain)
@@ -15,11 +23,39 @@ def build_skill_graph(domain: Domain) -> nx.DiGraph:
 
 
 def identify_gaps(all_skills: list[str], mastery_scores: dict[str, float], jd_data: JDData) -> set[str]:
-    jd_skills = set(jd_data.required) | set(jd_data.preferred)
+    required_threshold = max(MASTERY_THRESHOLD, 0.65)
+    preferred_threshold = max(MASTERY_THRESHOLD - 0.1, 0.5)
+    gaps: set[str] = set()
+    for skill in all_skills:
+        mastery = mastery_scores.get(skill, 0.0)
+        if skill in jd_data.required and mastery < required_threshold:
+            gaps.add(skill)
+        elif skill in jd_data.preferred and mastery < preferred_threshold:
+            gaps.add(skill)
+    return gaps
+
+
+def compute_gap_report(mastery_scores: dict[str, float], jd_data: JDData) -> dict[str, list[str]]:
+    ordered_skills = list(dict.fromkeys([*jd_data.required, *jd_data.preferred]))
+    missing: list[str] = []
+    weak: list[str] = []
+    met: list[str] = []
+
+    for skill in ordered_skills:
+        required_level = _required_level(skill, jd_data)
+        mastery = mastery_scores.get(skill, 0.0)
+        delta = required_level - mastery
+        if delta >= 0.35:
+            missing.append(skill)
+        elif delta >= 0.15:
+            weak.append(skill)
+        else:
+            met.append(skill)
+
     return {
-        skill
-        for skill in all_skills
-        if skill in jd_skills and mastery_scores.get(skill, 0.0) < MASTERY_THRESHOLD
+        "missing": sorted(missing),
+        "weak": sorted(weak),
+        "met": sorted(met),
     }
 
 

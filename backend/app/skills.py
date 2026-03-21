@@ -8,6 +8,17 @@ from .llm_classifier import classify_with_gemini
 from .schemas import JDData
 
 
+RESUME_SECTION_WEIGHTS: dict[str, float] = {
+    "skills": 1.0,
+    "summary": 0.9,
+    "experience": 1.2,
+    "projects": 1.1,
+    "education": 0.5,
+    "certifications": 0.7,
+    "unstructured": 0.8,
+}
+
+
 MANUAL_ALIASES: dict[str, list[str]] = {
     "CI/CD": ["ci/cd", "cicd", "pipeline", "pipelines"],
     "Linux/CLI": ["linux", "cli", "terminal", "shell"],
@@ -55,7 +66,19 @@ def build_aliases(domain: Domain) -> dict[str, list[str]]:
     return aliases
 
 
-def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
+def _count_alias_hits(text: str, aliases: list[str]) -> int:
+    mentions = 0
+    for alias in aliases:
+        pattern = re.compile(rf"\b{re.escape(alias)}\b", re.IGNORECASE)
+        mentions += len(pattern.findall(text))
+    return mentions
+
+
+def classify_resume_skills(
+    resume_text: str,
+    domain: Domain,
+    resume_sections: dict[str, str] | None = None,
+) -> list[dict]:
     llm_result = classify_with_gemini(resume_text, domain, mode="resume")
     if isinstance(llm_result, list):
         normalized = []
@@ -73,32 +96,57 @@ def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
         if normalized:
             normalized.sort(key=lambda item: (-item["mentions"], item["skill"]))
             return normalized
+
     aliases = build_aliases(domain)
+    sections = resume_sections or {"unstructured": resume_text}
     lowered = resume_text.lower()
     recent_cutoff = max(len(lowered) // 2, 1)
     items: list[dict] = []
+
     for skill, skill_aliases in aliases.items():
-        mentions = 0
+        section_hits: dict[str, int] = {}
+        weighted_hits = 0.0
         recent = False
+
+        for section_name, section_text in sections.items():
+            hits = _count_alias_hits(section_text, skill_aliases)
+            if hits <= 0:
+                continue
+            section_hits[section_name] = hits
+            weighted_hits += hits * RESUME_SECTION_WEIGHTS.get(section_name, 0.8)
+
+        all_matches = []
         for alias in skill_aliases:
             pattern = re.compile(rf"\b{re.escape(alias)}\b", re.IGNORECASE)
-            hits = list(pattern.finditer(resume_text))
-            mentions += len(hits)
-            if any(hit.start() <= recent_cutoff for hit in hits):
-                recent = True
+            all_matches.extend(pattern.finditer(resume_text))
+        if any(match.start() >= recent_cutoff for match in all_matches):
+            recent = True
+        if "experience" in section_hits or "projects" in section_hits:
+            recent = True
+
+        mentions = sum(section_hits.values())
         if mentions:
+            source_sections = sorted(section_hits, key=lambda name: (-section_hits[name], name))
+            evidence_score = min(1.0, weighted_hits / 6.0)
             items.append(
                 {
                     "skill": skill,
                     "mentions": mentions,
                     "in_recent_experience": recent,
+                    "source_sections": source_sections,
+                    "evidence_score": round(evidence_score, 3),
                 }
             )
-    items.sort(key=lambda item: (-item["mentions"], item["skill"]))
+
+    items.sort(key=lambda item: (-item.get("evidence_score", 0.0), -item["mentions"], item["skill"]))
     return items
 
 
-def classify_jd(jd_text: str, domain: Domain) -> JDData:
+def classify_jd(
+    jd_text: str,
+    domain: Domain,
+    jd_sections: dict[str, str] | None = None,
+) -> JDData:
     llm_result = classify_with_gemini(jd_text, domain, mode="jd")
     if isinstance(llm_result, dict):
         allowed = set(load_skills(domain))
@@ -106,22 +154,49 @@ def classify_jd(jd_text: str, domain: Domain) -> JDData:
         preferred = [skill for skill in llm_result.get("preferred", []) if skill in allowed and skill not in required]
         if required or preferred:
             return JDData(required=required, preferred=preferred)
+
     aliases = build_aliases(domain)
+    sections = jd_sections or {}
     lowered = jd_text.lower()
-    required_block = extract_block(lowered, ["required", "must have"], ["preferred", "bonus", "nice to have"])
-    preferred_block = extract_block(lowered, ["preferred", "nice to have"], ["bonus"])
-    bonus_block = extract_block(lowered, ["bonus"], [])
+
+    required_block = "\n".join(
+        filter(
+            None,
+            [
+                sections.get("required", ""),
+                sections.get("requirements", ""),
+                sections.get("responsibilities", ""),
+            ],
+        )
+    )
+    preferred_block = "\n".join(
+        filter(
+            None,
+            [
+                sections.get("preferred", ""),
+                sections.get("bonus", ""),
+            ],
+        )
+    )
+
+    if not required_block:
+        required_block = extract_block(lowered, ["required", "must have"], ["preferred", "bonus", "nice to have"])
+    if not preferred_block:
+        preferred_block = extract_block(lowered, ["preferred", "nice to have"], ["bonus"])
+
     required: list[str] = []
     preferred: list[str] = []
     for skill, skill_aliases in aliases.items():
         if contains_any(required_block, skill_aliases):
             required.append(skill)
-        elif contains_any(preferred_block, skill_aliases) or contains_any(bonus_block, skill_aliases):
+        elif contains_any(preferred_block, skill_aliases):
             preferred.append(skill)
+
     if not required and not preferred:
         for skill, skill_aliases in aliases.items():
             if contains_any(lowered, skill_aliases):
                 preferred.append(skill)
+
     return JDData(required=required, preferred=preferred)
 
 

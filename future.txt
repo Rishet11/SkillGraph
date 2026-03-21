@@ -1,0 +1,12 @@
+Future Scope Backlog
+
+1) OCR fallback for scanned PDF resume/JD parsing with quality score.
+2) Embedding-based skill normalization fallback (semantic nearest node mapping).
+3) User override hooks (known/rusty skill toggles) via confidence adjuster plugins.
+4) Assessment loop (question bank + confidence update + recompute path).
+5) Company course catalog upload with schema validation and hot-swap provider.
+6) Progress dashboard metrics per learner (completion, pace, score trends).
+7) Adaptive pacing rules (skip ahead for fast learners, remediate for slow learners).
+8) Advanced benchmarking metrics (time saved and correction frequency over cohorts).
+9) Confidence adjuster plug-ins (manager feedback, peer review, quiz deltas).
+10) Evidence snippets with line-level references from resume/JD sections.

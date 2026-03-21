@@ -34,6 +34,9 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
           <span className="pill">Domain: {result.domain.toUpperCase()}</span>
           <span className="pill">Trace coverage: {result.metrics.reasoning_trace_coverage}%</span>
           <span className="pill">Naive path: {result.metrics.naive_path_length}</span>
+          <span className="pill">Missing: {result.gap_report.missing.length}</span>
+          <span className="pill">Weak: {result.gap_report.weak.length}</span>
+          <span className="pill">Met: {result.gap_report.met.length}</span>
         </div>
         {!!result.warnings.length && (
           <div className="badge-row" style={{ marginTop: 18 }}>
@@ -107,10 +110,28 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
                   <p className="muted">{trace.reason}</p>
                   <div className="pill-list">
                     <span className="pill">mastery {trace.mastery.toFixed(2)}</span>
+                    <span className="pill">required {trace.required_level.toFixed(2)}</span>
+                    <span className="pill">gap {trace.gap.toFixed(2)}</span>
                     <span className="pill">priority {trace.priority_score.toFixed(2)}</span>
                     <span className="pill">depth {trace.downstream_depth}</span>
                     {trace.required_by_jd && <span className="pill good">required</span>}
                     {trace.preferred_by_jd && <span className="pill">preferred</span>}
+                  </div>
+                  <div className="pill-list" style={{ marginTop: 10 }}>
+                    {trace.reason_codes.map((code) => (
+                      <span className="pill" key={`${trace.skill}-${code}`}>
+                        {code}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="pill-list" style={{ marginTop: 10 }}>
+                    <span className="pill">JD: {trace.evidence.jd_signal}</span>
+                    <span className="pill">mentions: {trace.evidence.resume_mentions}</span>
+                    {trace.evidence.resume_sections.map((section) => (
+                      <span className="pill" key={`${trace.skill}-src-${section}`}>
+                        src {section}
+                      </span>
+                    ))}
                   </div>
                   <div className="pill-list" style={{ marginTop: 10 }}>
                     {trace.unlocks.map((unlock) => (

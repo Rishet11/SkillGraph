@@ -75,6 +75,7 @@ export default function HomePage() {
           course_map: updated.course_map,
           gap_count: updated.gap_count,
           gap_skills: updated.gap_skills,
+          gap_report: updated.gap_report,
           graph: updated.graph,
           metrics: updated.metrics,
           summary: {
@@ -248,4 +249,3 @@ export default function HomePage() {
     </main>
   );
 }
-
