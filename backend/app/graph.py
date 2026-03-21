@@ -118,14 +118,19 @@ def build_graph_payload(
     nodes = []
     for node in subgraph.nodes:
         mastery = mastery_scores.get(node, 0.0)
-        if node in path_set:
-            status = "selected_path"
-        elif node in gap_skills:
-            status = "critical_gap"
-        elif mastery >= 0.8:
+        # Priority: Mastered > Gaps > Path
+        if mastery >= 0.8:
             status = "mastered"
         elif mastery >= 0.4:
             status = "partial"
+        elif node in gap_skills:
+            # Distinguish between any gap and the specific highlighted path
+            if node in path_set:
+                status = "selected_path"
+            else:
+                status = "critical_gap"
+        elif node in path_set:
+            status = "selected_path"
         else:
             status = "unseen"
         nodes.append({"id": node, "label": node, "mastery": mastery, "status": status})

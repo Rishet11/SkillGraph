@@ -64,7 +64,8 @@ def classify_jd_semantic(jd_text: str, domain: Domain) -> dict:
     Uses semantic similarity to categorize JD skills into Required vs Preferred.
     """
     # Simple heuristic for V2: if similarity > 0.7 -> Required, 0.5-0.7 -> Preferred
-    matches = semantic_extract(jd_text, domain, threshold=0.5)
+    # Low threshold for document-to-word comparison
+    matches = semantic_extract(jd_text, domain, threshold=0.35)
     
     required = []
     preferred = []

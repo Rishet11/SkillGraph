@@ -103,9 +103,21 @@ def classify_jd(jd_text: str, domain: Domain = None) -> JDData:
         if required or preferred:
             return JDData(required=required, preferred=preferred)
 
-    # V2 Upgrade: Semantic JD Classification replaces block extraction
+    # V2 Upgrade: Semantic JD Classification
     res = classify_jd_semantic(jd_text, domain)
-    return JDData(required=res["required"], preferred=res["preferred"])
+    required = set(res["required"])
+    preferred = set(res["preferred"])
+
+    # High-Recall Extraction: Alias-Aware Keyword Matching
+    # This ensures items mentioned by name are always caught
+    aliases_map = build_aliases(domain)
+    for skill, aliases in aliases_map.items():
+        if contains_any(jd_text, aliases):
+            # If not already found by semantic, add to required
+            if skill not in required and skill not in preferred:
+                required.add(skill)
+
+    return JDData(required=list(required), preferred=list(preferred))
 
 
 def contains_any(text: str, aliases: list[str]) -> bool:
