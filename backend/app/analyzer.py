@@ -7,7 +7,6 @@ from .graph import (
     build_graph_payload,
     build_learning_subgraph,
     build_skill_graph,
-    compute_priority,
     generate_learning_path,
     identify_gaps,
 )
@@ -49,7 +48,8 @@ def run_pathway(domain: Domain, resume_skills: list[dict], jd_data: JDData, mast
     graph = build_skill_graph(domain)
     gap_skills = identify_gaps(all_skills, mastery_scores, jd_data)
     gap_subgraph = build_gap_subgraph(graph, gap_skills)
-    priorities = {node: compute_priority(node, gap_subgraph, jd_data, mastery_scores) for node in gap_subgraph.nodes}
+    from .ranker import rank_skills
+    priorities = rank_skills(list(gap_subgraph.nodes), domain, jd_data, mastery_scores, gap_subgraph)
     learning_subgraph = build_learning_subgraph(gap_subgraph, mastery_scores)
     path = generate_learning_path(learning_subgraph, priorities, mastery_scores)
     course_map = {skill: recommend_course(skill, gap_skills, domain) for skill in path}

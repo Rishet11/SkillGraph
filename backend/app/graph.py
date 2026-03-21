@@ -30,8 +30,11 @@ def build_gap_subgraph(graph: nx.DiGraph, gap_skills: set[str]) -> nx.DiGraph:
     return graph.subgraph(nodes_to_include).copy()
 
 
+from .gnn_scorer import gnn_score
+
+
 def compute_priority(
-    skill: str, subgraph: nx.DiGraph, jd_data: JDData, mastery_scores: dict[str, float]
+    skill: str, subgraph: nx.DiGraph, jd_data: JDData, mastery_scores: dict[str, float], domain: str
 ) -> float:
     if skill in jd_data.required:
         jd_importance = 1.0
@@ -39,14 +42,8 @@ def compute_priority(
         jd_importance = 0.6
     else:
         jd_importance = 0.0
-    descendants = nx.descendants(subgraph, skill)
-    downstream_depth = (
-        nx.dag_longest_path_length(subgraph.subgraph({skill} | descendants))
-        if descendants
-        else 0
-    )
     mastery = mastery_scores.get(skill, 0.0)
-    priority = 0.4 * jd_importance + 0.4 * downstream_depth - 0.2 * mastery
+    priority = 0.4 * jd_importance + 0.4 * gnn_score(skill, domain) - 0.2 * mastery
     return round(priority, 4)
 
 

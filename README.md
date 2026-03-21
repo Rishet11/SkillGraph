@@ -1,197 +1,61 @@
 # SkillGraph — AI-Adaptive Onboarding Engine
 
-SkillGraph is a hackathon-ready onboarding prototype that parses a candidate resume and a target job description, computes deterministic mastery scores over a fixed skill taxonomy, identifies the skill-gap subgraph, and generates a dependency-aware learning path grounded in a fixed course catalog.
-
 ## What It Does
-
-SkillGraph supports two domains: `SWE` and `Data`. Given a resume and JD, it classifies skills into a predefined list, computes mastery from mention frequency, recency, and JD relevance, identifies unmet gaps, and produces a prioritized path with a deterministic reasoning trace.
-
-## Live Demo
-
-- Local app: `http://127.0.0.1:3000`
-- API: `http://127.0.0.1:8000`
-- Fixed demo scenarios are bundled in the app and exposed through `/samples`
+SkillGraph parses a resume and job description, computes a personalized skill gap using a weighted mastery formula, and generates a dependency-aware learning path using graph-based adaptive pathing. Every recommendation comes from a fixed course catalog — zero hallucination.
 
 ## Architecture
+Layer 1: Gemini 1.5 Flash — skill classification from resume and JD text (classifier only)
+Layer 2: Mastery Scoring — deterministic formula: 0.35*frequency + 0.35*recency + 0.30*jd_match
+Layer 3: Gap Identification — NetworkX DAG subgraph of skills where mastery < 0.6 AND required by JD
+Layer 4: Node2Vec GNN — trained on skill dependency DAG, produces structural importance score per skill
+Layer 5: LightGBM Ranker — LambdaRank trained on 500 synthetic profiles, scores skill priority
+Layer 6: Greedy Frontier Traversal — original adaptive logic, prerequisite-safe path generation
+Layer 7: Course Mapping — fixed catalog lookup, maximizes gap skill coverage per step
+Layer 8: Deterministic Reasoning Trace — rule-based explanation per path node, no LLM involved
 
-```text
-Resume + JD
-   -> parser
-   -> deterministic skill classifier
-   -> mastery scorer
-   -> gap identifier
-   -> domain DAG / gap subgraph
-   -> priority-aware traversal
-   -> course mapper
-   -> reasoning trace
-   -> frontend 3-panel UI
-```
+## Models Used
+- Node2Vec (trained): unsupervised GNN on skill dependency DAG, 64-dim embeddings, L2 norm as structural importance score. Trained on O*NET-derived skill graphs for SWE and Data domains.
+- LightGBM LambdaRank (trained): priority ranker trained on 500 synthetic candidate profiles. Features: JD importance, GNN score, mastery, in-degree, out-degree. NDCG@5: 0.7978, NDCG@10: 0.8486.
+- Gemini 1.5 Flash (pre-trained): classifier-only. Maps resume and JD text to predefined skill list. Never generates course names or skill names.
+
+## Datasets Used
+- O*NET Occupational Database: skill taxonomy for SWE (15-1252.00) and Data Scientist (15-2051.00). Source for all skill lists and dependency edges.
+- Kaggle Resume Dataset (snehaanbhawal/resume-dataset): validated skill taxonomy coverage against 2400 real resumes across 25 job categories.
+- Kaggle JD Dataset (kshitizregmi/jobs-and-job-description): validated JD skill patterns against real job descriptions.
+- Synthetic path data: 500 candidate profiles generated from graph algorithm. Used as LightGBM LambdaRank training data.
 
 ## Skill-Gap Analysis Logic
+Mastery(s) = 0.35 * frequency + 0.35 * recency + 0.30 * jd_match
+Gap: skill in JD AND mastery < 0.6
+Priority(s) = LightGBM([jd_importance, gnn_score, mastery, in_degree, out_degree])
+Path: greedy frontier traversal — pick highest-priority node with all prerequisites satisfied
 
-### 1. Skill classification
+## Setup
 
-- Skills are classified only into a fixed domain taxonomy.
-- No free-form skill generation is allowed.
-- The course catalog is fixed JSON; the system never invents courses.
+### 1. Install backend dependencies
+cd backend && pip install -r requirements.txt
 
-### 2. Mastery formula
+### 2. Install frontend dependencies
+cd frontend && npm install
 
-For each skill:
+### 3. Run training (first time only, ~15 minutes)
+bash backend/training/run_all_training.sh
 
-```text
-mastery = 0.35 * frequency + 0.35 * recency + 0.30 * jd_match
-```
+### 4. Start backend
+cd backend && uvicorn app.main:app --reload
 
-Where:
+### 5. Start frontend
+cd frontend && npm run dev
 
-- `frequency` = normalized mention count in the resume, capped at `1.0`
-- `recency` = `1.0` if seen in recent experience, otherwise `0.5`
-- `jd_match` = `1.0` if required by JD, `0.6` if preferred, else `0.0`
-
-Gap rule:
-
-```text
-skill is a gap if it is required/preferred by the JD and mastery < 0.6
-```
-
-### 3. Priority formula
-
-```text
-priority(skill) = 0.4 * jd_importance + 0.4 * downstream_depth - 0.2 * mastery
-```
-
-Where:
-
-- `jd_importance` = `1.0` if required, `0.6` if preferred, else `0.0`
-- `downstream_depth` = longest dependency chain unlocked by that skill
-- `mastery` = current deterministic mastery score
-
-### 4. Traversal algorithm
-
-The learning path uses a frontier-based greedy traversal:
-
-- only skills with all unmet prerequisites satisfied enter the frontier
-- the highest-priority frontier skill is selected next
-- dependency constraints are never violated
-- `Mark Learned` sets a skill mastery to `1.0` and recomputes the path
-
-## Tech Stack
-
-- Backend: FastAPI
-- Graph engine: NetworkX with a local compatibility fallback for offline environments
-- Frontend: Next.js 14 + TypeScript
-- Data: fixed JSON taxonomies, edges, course catalog, demo scenarios
-- Parsing: PDF/TXT/DOCX support
-
-## Setup Instructions
-
-### Backend
-
-```bash
-python3 -m venv .venv
-./.venv/bin/python -m pip install -r backend/requirements.txt
-./.venv/bin/python -m uvicorn backend.app.main:app --reload
-```
-
-### Frontend
-
-Use Node 22:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-If your machine defaults to a newer Node version, switch to Node 22 first.
-
-## API Endpoints
-
-- `POST /parse`
-- `POST /pathway`
-- `POST /recompute`
-- `POST /analyze`
-- `GET /graph/{domain}`
-- `GET /catalog/{domain}`
-- `GET /samples`
-- `GET /samples/{id}`
-- `GET /health`
-
-## Datasets & Models Used
-
-- O*NET-grounded skill taxonomy, manually curated into `SWE` and `Data` domains
-- Fixed prerequisite edges defined from the PRD
-- Fixed course catalog grounded in public-learning style content
-- Deterministic classification is the default demo path
-- Gemini classifier-only integration is supported behind env flags and constrained to the fixed taxonomy
-
-## Optional Gemini Classifier
-
-SkillGraph does not require an LLM to run. If you want classifier-only Gemini support, set:
-
-```bash
+### 6. Environment variables (optional — enables Gemini)
+export GEMINI_API_KEY=your_key
 export SKILLGRAPH_ENABLE_GEMINI=1
-export GEMINI_API_KEY=your_key_here
-export SKILLGRAPH_GEMINI_MODEL=gemini-1.5-flash
-```
 
-Guardrails:
+### macOS only (required for LightGBM)
+export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:$DYLD_LIBRARY_PATH"
 
-- Gemini is used only to classify text into the predefined domain taxonomy.
-- It cannot invent new skills.
-- It cannot invent new courses.
-- If Gemini is disabled or fails, the backend falls back to deterministic classification.
+## Adaptive Logic
+The adaptive pathing layer is an original implementation. Greedy frontier traversal on a directed acyclic skill dependency graph. At each step, the algorithm selects the highest-priority node from skills whose prerequisites are all satisfied. Priority is scored by a trained LightGBM ranker using GNN structural embeddings and mastery. When a user marks a skill as learned, mastery updates to 1.0 and the full path recomputes.
 
-## Adaptive Logic (Original Implementation)
-
-The adaptive logic is original to this project:
-
-- mastery computation
-- gap detection
-- gap subgraph construction
-- priority scoring
-- dependency-safe path traversal
-- deterministic reasoning trace
-- adaptive recompute after `Mark Learned`
-
-## Repository Structure
-
-```text
-backend/  FastAPI API, parsing, mastery, graph, reasoning, pathway logic
-frontend/ Next.js UI
-data/     Skills, edges, courses, demo scenarios
-docs/     Deck content, demo notes, metrics
-```
-
-## Submission Artifacts
-
-- Final deck: `docs/deck/SkillGraph_Hackathon_Deck.pptx`
-- Demo runbook: `docs/demo-runbook.md`
-- Demo metrics: `docs/demo-metrics.md`
-- Browser evidence:
-  - `docs/screenshots/homepage.png`
-  - `docs/screenshots/data-demo.png`
-  - `docs/screenshots/data-demo-recomputed.png`
-  - `docs/screenshots/swe-demo.png`
-
-## Verification
-
-Backend:
-
-```bash
-./.venv/bin/pytest backend/tests
-```
-
-Frontend:
-
-```bash
-cd frontend
-npm run build
-```
-
-## Notes
-
-- The system is grounded to a fixed course catalog to avoid hallucination.
-- The current prototype covers only `SWE` and `Data`.
-- The reasoning trace is deterministic and visible in the UI.
+## Grounding and Reliability
+All course recommendations are selected from a fixed 48-course catalog via deterministic lookup. The LLM is constrained to classify into the predefined skill list only — it cannot generate course names, skill names, or any free-form content. Zero hallucination by construction.

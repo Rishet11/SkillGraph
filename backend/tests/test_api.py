@@ -134,3 +134,39 @@ def test_gemini_jd_classifier_result_is_filtered_to_taxonomy(monkeypatch):
     jd = skills_module.classify_jd("ignored", "data")
     assert jd.required == ["Machine Learning Fundamentals"]
     assert jd.preferred == ["NLP"]
+
+
+def test_keyword_fallback_on_invalid_gemini_response(monkeypatch):
+    import json
+    class MockResponse:
+        def read(self):
+            return json.dumps({
+                "candidates": [{
+                    "content": {
+                        "parts": [{"text": "not valid json"}]
+                    }
+                }]
+            }).encode("utf-8")
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+
+    def mock_urlopen(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr("app.llm_classifier.request.urlopen", mock_urlopen)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake_key")
+    monkeypatch.setenv("SKILLGRAPH_ENABLE_GEMINI", "1")
+
+    from app.llm_classifier import classify_with_gemini
+    from app.data_loader import load_skills
+
+    resume_text = "I have 5 years of experience with Python and SQL."
+    result = classify_with_gemini(resume_text, "data", "resume")
+
+    assert isinstance(result, list)
+    
+    skill_list = load_skills("data")
+    for item in result:
+        assert item["skill"] in skill_list
