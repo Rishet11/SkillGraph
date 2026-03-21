@@ -32,6 +32,7 @@ class ResumeSkill(BaseModel):
     source_sections: list[str] = Field(default_factory=list)
     evidence_score: float = 0.0
     evidence_snippets: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
 
 
 class JDData(BaseModel):
@@ -39,6 +40,8 @@ class JDData(BaseModel):
     preferred: list[str]
     required_evidence: dict[str, list[str]] = Field(default_factory=dict)
     preferred_evidence: dict[str, list[str]] = Field(default_factory=dict)
+    required_evidence_refs: dict[str, list[str]] = Field(default_factory=dict)
+    preferred_evidence_refs: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class ParseResponse(BaseModel):

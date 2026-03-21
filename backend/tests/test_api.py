@@ -67,6 +67,24 @@ def test_swe_path_respects_expected_start():
     assert path.index("System Design") < path.index("Microservices")
 
 
+def test_reasoning_includes_evidence_refs():
+    sample = client.get("/samples/demo-data").json()
+    response = client.post(
+        "/analyze",
+        json={
+            "domain": sample["domain"],
+            "resume_text": sample["resume_text"],
+            "jd_text": sample["jd_text"],
+        },
+    )
+    assert response.status_code == 200
+    trace = response.json()["reasoning"]
+    assert trace
+    evidence = trace[0]["evidence"]
+    assert "resume_refs" in evidence
+    assert "jd_refs" in evidence
+
+
 def test_recompute_marks_skill_as_learned():
     sample = client.get("/samples/demo-data").json()
     parsed = client.post(

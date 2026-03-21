@@ -63,6 +63,9 @@ export SKILLGRAPH_PREFERRED_THRESHOLD=0.50
 export SKILLGRAPH_MISSING_DELTA=0.35
 export SKILLGRAPH_WEAK_DELTA=0.15
 
+### One-command demo preset
+source backend/scripts/demo_preset.sh
+
 ### macOS only (required for LightGBM)
 export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:$DYLD_LIBRARY_PATH"
 

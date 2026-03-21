@@ -137,8 +137,14 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
                   {trace.evidence.resume_snippets.length > 0 && (
                     <p className="muted">Resume evidence: {trace.evidence.resume_snippets.join(" | ")}</p>
                   )}
+                  {trace.evidence.resume_refs.length > 0 && (
+                    <p className="muted">Resume refs: {trace.evidence.resume_refs.join(" | ")}</p>
+                  )}
                   {trace.evidence.jd_snippets.length > 0 && (
                     <p className="muted">JD evidence: {trace.evidence.jd_snippets.join(" | ")}</p>
+                  )}
+                  {trace.evidence.jd_refs.length > 0 && (
+                    <p className="muted">JD refs: {trace.evidence.jd_refs.join(" | ")}</p>
                   )}
                   <div className="pill-list" style={{ marginTop: 10 }}>
                     {trace.unlocks.map((unlock) => (

@@ -55,9 +55,13 @@ def generate_trace(
     resume_mentions = int((resume_skill or {}).get("mentions", 0))
     source_sections = list((resume_skill or {}).get("source_sections", []))
     resume_snippets = list((resume_skill or {}).get("evidence_snippets", []))
+    resume_refs = list((resume_skill or {}).get("evidence_refs", []))
     required_evidence = getattr(jd_data, "required_evidence", {})
     preferred_evidence = getattr(jd_data, "preferred_evidence", {})
+    required_evidence_refs = getattr(jd_data, "required_evidence_refs", {})
+    preferred_evidence_refs = getattr(jd_data, "preferred_evidence_refs", {})
     jd_snippets = list(required_evidence.get(skill, []) or preferred_evidence.get(skill, []))
+    jd_refs = list(required_evidence_refs.get(skill, []) or preferred_evidence_refs.get(skill, []))
     if required:
         jd_signal = "required"
     elif preferred:
@@ -82,7 +86,9 @@ def generate_trace(
             "resume_mentions": resume_mentions,
             "resume_sections": source_sections,
             "resume_snippets": resume_snippets,
+            "resume_refs": resume_refs,
             "jd_signal": jd_signal,
             "jd_snippets": jd_snippets,
+            "jd_refs": jd_refs,
         },
     }

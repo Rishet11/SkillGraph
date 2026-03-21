@@ -87,6 +87,19 @@ def _extract_matching_snippets(text: str, aliases: list[str], limit: int = 3) ->
     return snippets
 
 
+def _extract_matching_refs(text: str, aliases: list[str], source: str, limit: int = 3) -> list[str]:
+    refs: list[str] = []
+    for line_no, raw_line in enumerate(text.split("\n"), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        if any(re.search(rf"\b{re.escape(alias)}\b", line, re.IGNORECASE) for alias in aliases):
+            refs.append(f"{source}:{line_no}: {line[:140]}")
+        if len(refs) >= limit:
+            break
+    return refs
+
+
 def classify_resume_skills(
     resume_text: str,
     domain: Domain,
@@ -121,6 +134,7 @@ def classify_resume_skills(
         weighted_hits = 0.0
         recent = False
         snippets: list[str] = []
+        refs: list[str] = []
 
         for section_name, section_text in sections.items():
             hits = _count_alias_hits(section_text, skill_aliases)
@@ -131,6 +145,9 @@ def classify_resume_skills(
             for snippet in _extract_matching_snippets(section_text, skill_aliases, limit=2):
                 if snippet not in snippets:
                     snippets.append(snippet)
+            for ref in _extract_matching_refs(section_text, skill_aliases, source=section_name, limit=2):
+                if ref not in refs:
+                    refs.append(ref)
 
         all_matches = []
         for alias in skill_aliases:
@@ -153,6 +170,7 @@ def classify_resume_skills(
                     "source_sections": source_sections,
                     "evidence_score": round(evidence_score, 3),
                     "evidence_snippets": snippets[:3],
+                    "evidence_refs": refs[:4],
                 }
             )
 
@@ -206,25 +224,53 @@ def classify_jd(
     preferred: list[str] = []
     required_evidence: dict[str, list[str]] = {}
     preferred_evidence: dict[str, list[str]] = {}
+    required_evidence_refs: dict[str, list[str]] = {}
+    preferred_evidence_refs: dict[str, list[str]] = {}
+
+    required_sources = [
+        ("required", sections.get("required", "")),
+        ("requirements", sections.get("requirements", "")),
+        ("responsibilities", sections.get("responsibilities", "")),
+    ]
+    preferred_sources = [
+        ("preferred", sections.get("preferred", "")),
+        ("bonus", sections.get("bonus", "")),
+    ]
+
     for skill, skill_aliases in aliases.items():
         if contains_any(required_block, skill_aliases):
             required.append(skill)
             required_evidence[skill] = _extract_matching_snippets(required_block, skill_aliases, limit=2)
+            refs: list[str] = []
+            for source_name, source_text in required_sources:
+                if not source_text:
+                    continue
+                refs.extend(_extract_matching_refs(source_text, skill_aliases, source=source_name, limit=2))
+            required_evidence_refs[skill] = refs[:4]
         elif contains_any(preferred_block, skill_aliases):
             preferred.append(skill)
             preferred_evidence[skill] = _extract_matching_snippets(preferred_block, skill_aliases, limit=2)
+            refs = []
+            for source_name, source_text in preferred_sources:
+                if not source_text:
+                    continue
+                refs.extend(_extract_matching_refs(source_text, skill_aliases, source=source_name, limit=2))
+            preferred_evidence_refs[skill] = refs[:4]
 
     if not required and not preferred:
         for skill, skill_aliases in aliases.items():
             if contains_any(lowered, skill_aliases):
                 preferred.append(skill)
                 preferred_evidence[skill] = _extract_matching_snippets(lowered, skill_aliases, limit=2)
+                preferred_evidence_refs[skill] = _extract_matching_refs(lowered, skill_aliases, source="jd", limit=2)
 
     return JDData(
         required=required,
         preferred=preferred,
         required_evidence=required_evidence,
         preferred_evidence=preferred_evidence,
+        required_evidence_refs=required_evidence_refs,
+        preferred_evidence_refs=preferred_evidence_refs,
     )
 
 
