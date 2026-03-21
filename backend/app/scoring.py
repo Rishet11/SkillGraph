@@ -62,6 +62,18 @@ def compare_skills(resume_skills, target_skills):
             )
             earned_weight -= importance_weight * weights["missing_penalty"]
     fit_score = max(0, min(100, round((max(0.0, earned_weight) / total_weight) * 100 if total_weight else 0)))
-    confidence = max(35, min(96, round(55 + len(resume_skills) * 4 + len(target_skills) * 2 - len(missing) * 3)))
+    
+    # V2 Upgrade: Dynamic Confidence (replaced static heuristic 55 + 4*n...)
+    n_res = len(resume_skills)
+    n_target = len(target_skills)
+    n_missing = len(missing)
+    avg_mastery = sum(s["mastery_score"] for s in matched) / len(matched) if matched else 0
+    
+    base_conf = 50
+    coverage_factor = (len(matched) / n_target) * 30 if n_target > 0 else 0
+    mastery_factor = (avg_mastery / 100) * 15
+    penalty_factor = (n_missing / n_target) * 10 if n_target > 0 else 0
+    
+    confidence = round(min(98, max(30, base_conf + coverage_factor + mastery_factor - penalty_factor)))
     return matched, missing, fit_score, confidence
 

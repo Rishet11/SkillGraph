@@ -3,7 +3,24 @@ from __future__ import annotations
 from .schemas import JDData
 
 
+import os
+import json
+
+# Default weights as fallback
 WEIGHTS = {"frequency": 0.35, "recency": 0.35, "jd_match": 0.30}
+
+def _load_dynamic_weights():
+    global WEIGHTS
+    base = os.path.dirname(__file__)
+    path = os.path.normpath(os.path.join(base, '..', 'models', 'mastery_weights.json'))
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                WEIGHTS = json.load(f)
+        except:
+            pass
+
+_load_dynamic_weights()
 MASTERY_THRESHOLD = 0.6
 
 

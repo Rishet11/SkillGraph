@@ -1,0 +1,17 @@
+Ananya Sharma
+
+Summary
+Data analyst with 2 years of experience building reporting workflows, cleaning datasets, and communicating insights to product teams.
+
+Skills
+Python, SQL, Excel, Tableau, dashboards, statistical analysis, A/B testing
+
+Experience
+- Built weekly KPI dashboards in Tableau and Excel for growth and operations teams.
+- Wrote SQL queries to analyze funnel conversion and retention cohorts.
+- Automated reporting in Python using pandas and matplotlib.
+- Presented findings to stakeholders with clear visual storytelling.
+
+Projects
+- Customer churn analysis using logistic regression and hypothesis testing.
+

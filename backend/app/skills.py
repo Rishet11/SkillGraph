@@ -55,6 +55,8 @@ def build_aliases(domain: Domain) -> dict[str, list[str]]:
     return aliases
 
 
+from .semantic_matcher import semantic_extract, classify_jd_semantic
+
 def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
     llm_result = classify_with_gemini(resume_text, domain, mode="resume")
     if isinstance(llm_result, list):
@@ -73,29 +75,9 @@ def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
         if normalized:
             normalized.sort(key=lambda item: (-item["mentions"], item["skill"]))
             return normalized
-    aliases = build_aliases(domain)
-    lowered = resume_text.lower()
-    recent_cutoff = max(len(lowered) // 2, 1)
-    items: list[dict] = []
-    for skill, skill_aliases in aliases.items():
-        mentions = 0
-        recent = False
-        for alias in skill_aliases:
-            pattern = re.compile(rf"\b{re.escape(alias)}\b", re.IGNORECASE)
-            hits = list(pattern.finditer(resume_text))
-            mentions += len(hits)
-            if any(hit.start() <= recent_cutoff for hit in hits):
-                recent = True
-        if mentions:
-            items.append(
-                {
-                    "skill": skill,
-                    "mentions": mentions,
-                    "in_recent_experience": recent,
-                }
-            )
-    items.sort(key=lambda item: (-item["mentions"], item["skill"]))
-    return items
+
+    # V2 Upgrade: Semantic Extraction replaces Keyword Falling
+    return semantic_extract(resume_text, domain)
 
 
 def classify_jd(jd_text: str, domain: Domain) -> JDData:
@@ -106,23 +88,10 @@ def classify_jd(jd_text: str, domain: Domain) -> JDData:
         preferred = [skill for skill in llm_result.get("preferred", []) if skill in allowed and skill not in required]
         if required or preferred:
             return JDData(required=required, preferred=preferred)
-    aliases = build_aliases(domain)
-    lowered = jd_text.lower()
-    required_block = extract_block(lowered, ["required", "must have"], ["preferred", "bonus", "nice to have"])
-    preferred_block = extract_block(lowered, ["preferred", "nice to have"], ["bonus"])
-    bonus_block = extract_block(lowered, ["bonus"], [])
-    required: list[str] = []
-    preferred: list[str] = []
-    for skill, skill_aliases in aliases.items():
-        if contains_any(required_block, skill_aliases):
-            required.append(skill)
-        elif contains_any(preferred_block, skill_aliases) or contains_any(bonus_block, skill_aliases):
-            preferred.append(skill)
-    if not required and not preferred:
-        for skill, skill_aliases in aliases.items():
-            if contains_any(lowered, skill_aliases):
-                preferred.append(skill)
-    return JDData(required=required, preferred=preferred)
+
+    # V2 Upgrade: Semantic JD Classification replaces block extraction
+    res = classify_jd_semantic(jd_text, domain)
+    return JDData(required=res["required"], preferred=res["preferred"])
 
 
 def contains_any(text: str, aliases: list[str]) -> bool:

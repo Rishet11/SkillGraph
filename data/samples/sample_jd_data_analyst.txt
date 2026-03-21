@@ -1,0 +1,4 @@
+Role: Junior Data Analyst
+
+We are hiring a junior data analyst to turn product and business data into clear insights. The ideal candidate has strong SQL, Excel, Python, and statistics fundamentals. Experience with data visualization, Tableau or Power BI, stakeholder communication, and dashboarding is preferred. Familiarity with machine learning is a bonus.
+
