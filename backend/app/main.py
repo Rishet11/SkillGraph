@@ -21,6 +21,12 @@ from .schemas import (
 
 app = FastAPI(title="SkillGraph API", version="0.2.0")
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    return {"error": str(exc), "trace": traceback.format_exc()}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -58,15 +64,11 @@ def get_sample(sample_id: str):
 
 @app.get("/catalog/{domain}")
 def get_catalog(domain: str):
-    if domain not in {"swe", "data"}:
-        raise HTTPException(status_code=400, detail="Domain must be 'swe' or 'data'.")
     return load_courses(domain)  # type: ignore[arg-type]
 
 
 @app.get("/graph/{domain}")
 def get_graph(domain: str):
-    if domain not in {"swe", "data"}:
-        raise HTTPException(status_code=400, detail="Domain must be 'swe' or 'data'.")
     graph = build_skill_graph(domain)  # type: ignore[arg-type]
     zero_mastery = {node: 0.0 for node in graph.nodes}
     return build_graph_payload(graph, [], zero_mastery, set())
@@ -112,9 +114,10 @@ async def parse_request_to_documents(request: Request):
         return payload, resume, jd
     if "multipart/form-data" in content_type:
         form = await request.form()
-        domain = str(form.get("domain", "data")).lower()
-        if domain not in {"swe", "data"}:
-            raise HTTPException(status_code=400, detail="Domain must be 'swe' or 'data'.")
+        domain = str(form.get("domain", "")).lower()
+        if not domain or domain == "none":
+            domain = None
+        
         payload = TextPayload(
             domain=domain,  # type: ignore[arg-type]
             resume_text=str(form.get("resume_text", "")),

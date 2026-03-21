@@ -15,9 +15,17 @@ from .parser import ParsedDocument
 from .reasoning import generate_trace
 from .schemas import AnalyzeResponse, AnalyzeSummary, JDData, Metrics, ParseMetadata, ParseResponse, PathwayResponse
 from .skills import classify_jd, classify_resume_skills
+from .ontology import detect_industry
 
 
-def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> ParseResponse:
+def get_mapped_domain(text: str) -> Domain:
+    return detect_industry(text)
+
+
+def run_parse(domain: Domain | None, resume: ParsedDocument, jd: ParsedDocument) -> ParseResponse:
+    if domain is None:
+        domain = get_mapped_domain(jd.text)
+        
     resume_skills = classify_resume_skills(resume.text, domain)
     jd_data = classify_jd(jd.text, domain)
     mastery_scores = compute_mastery_scores(load_skills(domain), resume_skills, jd_data)
@@ -43,7 +51,11 @@ def run_parse(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> Par
     )
 
 
-def run_pathway(domain: Domain, resume_skills: list[dict], jd_data: JDData, mastery_scores: dict[str, float]) -> PathwayResponse:
+def run_pathway(domain: Domain | None, resume_skills: list[dict], jd_data: JDData, mastery_scores: dict[str, float]) -> PathwayResponse:
+    if domain is None:
+        # We can't easily auto-detect from skills list without context, so we expect domain here 
+        # but fallback to 'swe' for safety if called without one.
+        domain = "swe"
     all_skills = load_skills(domain)
     graph = build_skill_graph(domain)
     gap_skills = identify_gaps(all_skills, mastery_scores, jd_data)
@@ -77,7 +89,9 @@ def run_pathway(domain: Domain, resume_skills: list[dict], jd_data: JDData, mast
     )
 
 
-def analyze_documents(domain: Domain, resume: ParsedDocument, jd: ParsedDocument) -> AnalyzeResponse:
+def analyze_documents(domain: Domain | None, resume: ParsedDocument, jd: ParsedDocument) -> AnalyzeResponse:
+    if domain is None:
+        domain = get_mapped_domain(jd.text)
     parsed = run_parse(domain, resume, jd)
     pathway = run_pathway(domain, parsed.resume_skills, parsed.jd_data, parsed.mastery_scores)
     warnings = [
@@ -106,7 +120,7 @@ def analyze_documents(domain: Domain, resume: ParsedDocument, jd: ParsedDocument
         summary=AnalyzeSummary(
             headline=headline,
             explanation=(
-                f"SkillGraph found {pathway.gap_count} gaps in the {domain.upper()} domain "
+                f"SkillGraph found {pathway.gap_count} gaps in the {(domain or 'Universal').upper()} domain "
                 f"and generated a deterministic, dependency-aware path of {len(pathway.path)} steps."
             ),
         ),

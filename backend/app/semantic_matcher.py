@@ -32,6 +32,9 @@ def semantic_extract(text: str, domain: Domain, threshold: float = 0.5) -> list[
     """
     model = get_model()
     all_skills = load_skills(domain)
+    if not all_skills:
+        return []
+        
     skill_embeddings = get_skill_embeddings(domain)
     
     # Encode the input text

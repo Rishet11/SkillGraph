@@ -56,8 +56,16 @@ def build_aliases(domain: Domain) -> dict[str, list[str]]:
 
 
 from .semantic_matcher import semantic_extract, classify_jd_semantic
+from .ontology import detect_industry
 
-def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
+def classify_resume_skills(resume_text: str, domain: Domain = None) -> list[dict]:
+    # V2 Upgrade: Auto-Industry Detection for "Universal" support
+    if domain is None:
+        detected = detect_industry(resume_text)
+        # Map industry string to Domain enum for current logic
+        domain = "swe" if "Technology" in detected else ("data" if "Data" in detected else "swe")
+        print(f"Auto-Detected Domain: {domain} (from {detected})")
+
     llm_result = classify_with_gemini(resume_text, domain, mode="resume")
     if isinstance(llm_result, list):
         normalized = []
@@ -80,7 +88,13 @@ def classify_resume_skills(resume_text: str, domain: Domain) -> list[dict]:
     return semantic_extract(resume_text, domain)
 
 
-def classify_jd(jd_text: str, domain: Domain) -> JDData:
+def classify_jd(jd_text: str, domain: Domain = None) -> JDData:
+    # V2 Upgrade: Auto-Industry Detection
+    if domain is None:
+        detected = detect_industry(jd_text)
+        domain = "swe" if "Technology" in detected else ("data" if "Data" in detected else "swe")
+        print(f"Auto-Detected JD Domain: {domain} (from {detected})")
+
     llm_result = classify_with_gemini(jd_text, domain, mode="jd")
     if isinstance(llm_result, dict):
         allowed = set(load_skills(domain))

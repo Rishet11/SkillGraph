@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 
-Domain = Literal["swe", "data"]
+Domain = str
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
@@ -19,14 +19,26 @@ def _read_json(path: Path):
 
 @lru_cache(maxsize=1)
 def load_skills(domain: Domain) -> list[str]:
-    filename = "skills_swe.json" if domain == "swe" else "skills_data.json"
-    return _read_json(DATA_DIR / filename)
+    if domain == "swe":
+        return _read_json(DATA_DIR / "skills_swe.json")
+    elif domain == "data":
+        return _read_json(DATA_DIR / "skills_data.json")
+    elif domain == "hr":
+        return _read_json(DATA_DIR / "skills_hr.json")
+    return []  # V2 Upgrade: Return empty for JIT Universal Discovery
 
 
 @lru_cache(maxsize=1)
 def load_edges(domain: Domain) -> list[tuple[str, str]]:
-    filename = "edges_swe.json" if domain == "swe" else "edges_data.json"
-    return [tuple(item) for item in _read_json(DATA_DIR / filename)]
+    if domain == "swe":
+        data = _read_json(DATA_DIR / "edges_swe.json")
+    elif domain == "data":
+        data = _read_json(DATA_DIR / "edges_data.json")
+    elif domain == "hr":
+        data = _read_json(DATA_DIR / "edges_hr.json")
+    else:
+        return []
+    return [tuple(item) for item in data]
 
 
 @lru_cache(maxsize=1)

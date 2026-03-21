@@ -5,12 +5,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-Domain = Literal["swe", "data"]
+Domain = str | None
 NodeStatus = Literal["mastered", "partial", "critical_gap", "selected_path", "unseen"]
 
 
 class TextPayload(BaseModel):
-    domain: Domain
+    domain: Domain = None
     resume_text: str = Field(default="")
     jd_text: str = Field(default="")
 

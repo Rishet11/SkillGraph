@@ -4,6 +4,7 @@ from .data_loader import Domain, load_edges, load_skills
 from .mastery import MASTERY_THRESHOLD
 from .nx_compat import nx
 from .schemas import JDData
+from .ontology import get_skill_ontology
 
 
 def build_skill_graph(domain: Domain) -> nx.DiGraph:
@@ -16,17 +17,44 @@ def build_skill_graph(domain: Domain) -> nx.DiGraph:
 
 def identify_gaps(all_skills: list[str], mastery_scores: dict[str, float], jd_data: JDData) -> set[str]:
     jd_skills = set(jd_data.required) | set(jd_data.preferred)
-    return {
-        skill
-        for skill in all_skills
-        if skill in jd_skills and mastery_scores.get(skill, 0.0) < MASTERY_THRESHOLD
-    }
+    gaps = set()
+    for skill in jd_skills:
+        # V2 Upgrade: JIT Prerequisite Discovery
+        # If skill is not in our local list, we treat it as a gap
+        if skill not in all_skills:
+            gaps.add(skill)
+            continue
+            
+        if mastery_scores.get(skill, 0.0) < MASTERY_THRESHOLD:
+            gaps.add(skill)
+    return gaps
 
 
-def build_gap_subgraph(graph: nx.DiGraph, gap_skills: set[str]) -> nx.DiGraph:
+def build_gap_subgraph(graph: nx.DiGraph, gap_skills: set[str], industry: str = "Technology/Software") -> nx.DiGraph:
     nodes_to_include = set(gap_skills)
-    for skill in gap_skills:
-        nodes_to_include.update(nx.ancestors(graph, skill))
+    
+    # Track skills already processed to avoid infinite loops in JIT discovery
+    processed = set()
+    queue = list(gap_skills)
+    
+    while queue:
+        skill = queue.pop(0)
+        if skill in processed:
+            continue
+        processed.add(skill)
+        
+        if skill in graph:
+            nodes_to_include.update(nx.ancestors(graph, skill))
+        else:
+            # V2 Upgrade: JIT Prerequisite Fetch for unknown industries
+            prereqs = get_skill_ontology(skill, industry)
+            for p in prereqs:
+                if p not in nodes_to_include:
+                    nodes_to_include.add(p)
+                    queue.append(p)
+                    # We might want to add these "new" edges to a local session graph
+                    # But for the subgraph, adding nodes is enough for now
+    
     return graph.subgraph(nodes_to_include).copy()
 
 
