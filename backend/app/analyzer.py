@@ -51,10 +51,32 @@ def run_parse(domain: Domain | None, resume: ParsedDocument, jd: ParsedDocument)
     )
 
 
+def cluster_skills_into_pillars(skills: list[str]) -> dict[str, list[str]]:
+    """Groups skills into logical high-level career pillars for dashboarding."""
+    PILLARS = {
+        "Core Engineering": ["Data Structures", "Algorithms", "OOP", "Testing", "Clean Code", "Design Patterns"],
+        "Backend & Systems": ["Linux/CLI", "Operating Systems", "Computer Networks", "SQL", "REST APIs", "Node.js", "Databases (NoSQL)", "Microservices", "Caching (Redis)", "Message Queues", "System Design"],
+        "Frontend & Web": ["HTML/CSS", "JavaScript", "TypeScript", "React", "GraphQL", "Git"],
+        "DevOps & Cloud": ["Docker", "Cloud Basics", "CI/CD", "Security Basics"]
+    }
+    clusters = {p: [] for p in PILLARS}
+    clusters["Other"] = []
+    
+    for skill in skills:
+        found = False
+        for pillar, skill_list in PILLARS.items():
+            if skill in skill_list:
+                clusters[pillar].append(skill)
+                found = True
+                break
+        if not found:
+            clusters["Other"].append(skill)
+            
+    return {p: s for p, s in clusters.items() if s}
+
+
 def run_pathway(domain: Domain | None, resume_skills: list[dict], jd_data: JDData, mastery_scores: dict[str, float]) -> PathwayResponse:
     if domain is None:
-        # We can't easily auto-detect from skills list without context, so we expect domain here 
-        # but fallback to 'swe' for safety if called without one.
         domain = "swe"
     all_skills = load_skills(domain)
     graph = build_skill_graph(domain)
@@ -86,6 +108,7 @@ def run_pathway(domain: Domain | None, resume_skills: list[dict], jd_data: JDDat
         domain=domain,
         graph=graph_payload,
         metrics=metrics,
+        pillars=cluster_skills_into_pillars(list(gap_skills))
     )
 
 
@@ -124,6 +147,7 @@ def analyze_documents(domain: Domain | None, resume: ParsedDocument, jd: ParsedD
                 f"and generated a deterministic, dependency-aware path of {len(pathway.path)} steps."
             ),
         ),
+        pillars=pathway.pillars,
         warnings=list(dict.fromkeys(warnings)),
     )
 

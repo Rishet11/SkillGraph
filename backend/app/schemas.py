@@ -102,6 +102,7 @@ class PathwayResponse(BaseModel):
     domain: Domain
     graph: dict[str, list[GraphNode] | list[GraphEdge]]
     metrics: Metrics
+    pillars: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class AnalyzeSummary(BaseModel):
@@ -124,6 +125,7 @@ class AnalyzeResponse(BaseModel):
     metrics: Metrics
     parse_metadata: dict[str, ParseMetadata]
     summary: AnalyzeSummary
+    pillars: dict[str, list[str]] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
 
 

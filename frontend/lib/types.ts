@@ -79,6 +79,7 @@ export type AnalyzeResponse = {
     headline: string;
     explanation: string;
   };
+  pillars: Record<string, string[]>;
   warnings: string[];
 };
 
@@ -95,6 +96,7 @@ export type PathwayResponse = {
     edges: GraphEdge[];
   };
   metrics: Metrics;
+  pillars: Record<string, string[]>;
 };
 
 export type SampleScenario = {

@@ -3,6 +3,8 @@
 import { AnalyzeResponse } from "../lib/types";
 import { GraphPanel } from "./GraphPanel";
 
+import { PillarDashboard } from "./PillarDashboard";
+
 type Props = {
   result: AnalyzeResponse;
   onMarkLearned: (skill: string) => void;
@@ -16,6 +18,9 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
         <p className="section-kicker">Analysis Outcome</p>
         <h2>{result.summary.headline}</h2>
         <p className="muted">{result.summary.explanation}</p>
+        
+        <PillarDashboard pillars={result.pillars} />
+
         <div className="score-grid">
           <div className="score-card">
             <div className="muted">Gap count</div>
@@ -87,11 +92,15 @@ export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props)
 
         <div className="panel">
           <h3>Path + Reasoning</h3>
-          <div className="roadmap">
-            {result.reasoning.map((trace) => {
+          <div className="roadmap animate-fade-in stagger-2">
+            {result.reasoning.map((trace, idx) => {
               const course = result.course_map[trace.skill];
               return (
-                <div className="roadmap-step" key={trace.skill}>
+                <div 
+                  className={`roadmap-step animate-fade-in`} 
+                  key={trace.skill}
+                  style={{ animationDelay: `${0.1 * idx}s` }}
+                >
                   <div className="skill-row">
                     <strong>
                       {trace.position}. {trace.skill}
