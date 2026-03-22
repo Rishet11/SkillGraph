@@ -212,7 +212,7 @@ export default function HomePage() {
 
         {isPending && (
           <section className="panel animate-fade-in" style={{ marginTop: 60, textAlign: 'center', borderColor: 'var(--primary)', maxWidth: '1000px', margin: '60px auto 0' }}>
-            <span className="section-kicker">Processing via Gemini & BERT</span>
+            <span className="section-kicker">Processing via Hybrid AI Pipeline</span>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: 24, flexWrap: 'wrap' }}>
               {loadingSteps.map((step, i) => (
                 <span className="pill primary" key={step} style={{ animationDelay: `${i * 0.15}s` }}>

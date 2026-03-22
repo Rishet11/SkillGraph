@@ -30,7 +30,22 @@ Gap: skill in JD AND mastery < 0.6
 Priority(s) = LightGBM([jd_importance, gnn_score, mastery, in_degree, out_degree])
 Path: greedy frontier traversal — pick highest-priority node with all prerequisites satisfied
 
-## Setup
+## Quick Start (Docker) — Recommended for Judges
+
+The easiest way to run SkillGraph is using Docker. This ensures all system dependencies (like LightGBM's OpenMP) are correctly configured.
+
+1. **Start the environment**:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Access the Application**:
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:8000](http://localhost:8000)
+
+---
+
+## 🛠 Manual Setup (Local Development)
 
 ### 1. Install backend dependencies
 cd backend && pip install -r requirements.txt
@@ -38,7 +53,7 @@ cd backend && pip install -r requirements.txt
 ### 2. Install frontend dependencies
 cd frontend && npm install
 
-### 3. Run training (first time only, ~15 minutes)
+### 3. Run training (First time only, ~15 minutes)
 bash backend/training/run_all_training.sh
 
 ### 4. Start backend
@@ -47,11 +62,11 @@ cd backend && uvicorn app.main:app --reload
 ### 5. Start frontend
 cd frontend && npm run dev
 
-### 6. Environment variables (optional — enables Gemini)
+### 6. Environment variables (Optional — enables Gemini)
 export GEMINI_API_KEY=your_key
 export SKILLGRAPH_ENABLE_GEMINI=1
 
-### macOS only (required for LightGBM)
+### macOS only (Required for local LightGBM build)
 export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:$DYLD_LIBRARY_PATH"
 
 ## Adaptive Logic
@@ -59,3 +74,9 @@ The adaptive pathing layer is an original implementation. Greedy frontier traver
 
 ## Grounding and Reliability
 All course recommendations are selected from a fixed 48-course catalog via deterministic lookup. The LLM is constrained to classify into the predefined skill list only — it cannot generate course names, skill names, or any free-form content. Zero hallucination by construction.
+
+## 📊 Evaluation & Proof of Training
+For formal evaluation:
+- **Scripts**: See `backend/training/` for GNN and LightGBM training logic.
+- **Dataset**: See `backend/training/synthetic_data.json` for the generated profile dataset.
+- **Metrics**: See `backend/models/training_summary.md` for a summary of NDCG scores and feature importance.

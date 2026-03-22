@@ -95,14 +95,12 @@ def classify_with_gemini(text: str, domain: Domain, mode: str) -> list[dict] | d
 
     try:
         result = make_request(stricter=False)
-        print("Gemini classification successful")
         return result
     except (error.URLError, TimeoutError, json.JSONDecodeError, KeyError, IndexError, TypeError):
         try:
             result = make_request(stricter=True)
-            print("Gemini classification successful on retry")
             return result
         except (error.URLError, TimeoutError, json.JSONDecodeError, KeyError, IndexError, TypeError):
-            print("Gemini classification failed, using keyword fallback")
+            # Fallback to local keyword search
             return keyword_fallback_classify(text, domain)
 

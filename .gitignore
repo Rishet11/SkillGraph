@@ -12,8 +12,8 @@ backend/.pytest_cache
 .DS_Store
 SkillGraph_PRD_v2.pdf
 
-# ML Models and Training
-backend/models/bert-ner/
-backend/models/*.lgb
-backend/models/embeddings_*.json
-backend/training/synthetic_data.json
+# ML Models and Training (Bundled for Judges)
+# backend/models/bert-ner/
+# backend/models/*.lgb
+# backend/models/embeddings_*.json
+# backend/training/synthetic_data.json

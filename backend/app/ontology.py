@@ -40,7 +40,7 @@ _industry_embeddings = None
 
 def detect_industry(text: str) -> str:
     """
-    Uses BERT embeddings to classify a JD/Resume into one of the core industries.
+    Uses semantic embeddings to classify a JD/Resume into one of the core industries.
     """
     global _industry_embeddings
     model = get_model()

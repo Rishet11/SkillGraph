@@ -12,7 +12,7 @@ _skill_embeddings: dict[str, torch.Tensor] = {}
 def get_model():
     global _model
     if _model is None:
-        # Using a balanced model for a hackathon: fast, local, and BERT-based
+        # Using a balanced model for fast, local semantic mapping
         _model = SentenceTransformer('all-MiniLM-L6-v2')
     return _model
 
@@ -27,7 +27,7 @@ def get_skill_embeddings(domain: Domain):
 
 def semantic_extract(text: str, domain: Domain, threshold: float = 0.5) -> list[dict]:
     """
-    Matches text spans to the skill taxonomy using BERT embeddings.
+    Matches text spans to the skill taxonomy using vector embeddings.
     Returns: [{"skill": str, "score": float}]
     """
     model = get_model()
@@ -38,8 +38,8 @@ def semantic_extract(text: str, domain: Domain, threshold: float = 0.5) -> list[
     skill_embeddings = get_skill_embeddings(domain)
     
     # Encode the input text
-    # In a real-world scenario, we might chunk the text, 
-    # but for a hackathon, encoding the full text and comparing to skill synonyms works well.
+    # In a production scenario, we might chunk the text, 
+    # but for this scale, encoding the full text works well.
     text_embedding = model.encode(text, convert_to_tensor=True)
     
     # Compute cosine similarities
@@ -63,7 +63,7 @@ def classify_jd_semantic(jd_text: str, domain: Domain) -> dict:
     """
     Uses semantic similarity to categorize JD skills into Required vs Preferred.
     """
-    # Simple heuristic for V2: if similarity > 0.7 -> Required, 0.5-0.7 -> Preferred
+    # Thresholds: if similarity > 0.7 -> Required, 0.5-0.7 -> Preferred
     # Low threshold for document-to-word comparison
     matches = semantic_extract(jd_text, domain, threshold=0.35)
     

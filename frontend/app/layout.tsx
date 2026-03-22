@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SkillGraph",
-  description: "AI-adaptive onboarding engine for hackathon demos."
+  description: "AI-adaptive onboarding engine for personalized learning paths."
 };
 
 export default function RootLayout({

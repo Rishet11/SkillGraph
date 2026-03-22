@@ -18,8 +18,8 @@ def main():
     domains = ["swe", "data"]
     random.seed(42)
     
-    # V2 Scale: 25,000 profiles per domain = 50,000 total profiles (~100k+ training pairs)
-    profiles_per_domain = 25000 
+    # Light training scale for instant deployment
+    profiles_per_domain = 500 
     total_generated = 0
     total_pairs = 0
     
