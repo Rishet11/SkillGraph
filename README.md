@@ -1,5 +1,9 @@
 # SkillGraph — AI-Adaptive Onboarding Engine
 
+AI-adaptive onboarding engine using graph-based skill gap analysis and trained ML models.
+
+### Topics: `machine-learning`, `fastapi`, `nextjs`, `graph-neural-network`, `adaptive-learning`
+
 ## What It Does
 SkillGraph parses a resume and job description, computes a personalized skill gap using a weighted mastery formula, and generates a dependency-aware learning path using graph-based adaptive pathing. Every recommendation comes from a fixed course catalog — zero hallucination.
 
@@ -25,7 +29,7 @@ Layer 8: Deterministic Reasoning Trace — rule-based explanation per path node,
 - Synthetic path data: 500 candidate profiles generated from graph algorithm. Used as LightGBM LambdaRank training data.
 
 ## Skill-Gap Analysis Logic
-Mastery(s) = 0.35 * frequency + 0.35 * recency + 0.30 * jd_match
+Mastery(s) = 0.31 * frequency + 0.336 * recency + 0.354 * jd_match
 Gap: skill in JD AND mastery < 0.6
 Priority(s) = LightGBM([jd_importance, gnn_score, mastery, in_degree, out_degree])
 Path: greedy frontier traversal — pick highest-priority node with all prerequisites satisfied

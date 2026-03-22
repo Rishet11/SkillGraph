@@ -7,7 +7,8 @@ import os
 import json
 
 # Default weights as fallback
-WEIGHTS = {"frequency": 0.35, "recency": 0.35, "jd_match": 0.30}
+# Optimized weights from documentation
+WEIGHTS = {"frequency": 0.31, "recency": 0.336, "jd_match": 0.354}
 
 def _load_dynamic_weights():
     global WEIGHTS
