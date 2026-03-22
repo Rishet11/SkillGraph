@@ -1,86 +1,145 @@
-# SkillGraph — AI-Adaptive Onboarding Engine
+# SkillGraph — AI-Adaptive Learning Path Engine
 
-AI-adaptive onboarding engine using graph-based skill gap analysis and trained ML models.
+> **Paste your resume. Paste a job description. Get a personalized, dependency-aware skill roadmap in seconds — powered by Graph Neural Networks, not ChatGPT guesswork.**
 
-### Topics: `machine-learning`, `fastapi`, `nextjs`, `graph-neural-network`, `adaptive-learning`
+---
 
-## What It Does
-SkillGraph parses a resume and job description, computes a personalized skill gap using a weighted mastery formula, and generates a dependency-aware learning path using graph-based adaptive pathing. Every recommendation comes from a fixed course catalog — zero hallucination.
+## 🚀 What It Does
 
-## Architecture
-Layer 1: Semantic Search — `all-MiniLM-L6-v2` local vector embeddings for instant skill matching
-Layer 2: Gemini 1.5 Flash — "Deep Thinker" fallback for low-confidence or sparse document contexts
-Layer 3: Gap Identification — NetworkX DAG subgraph of skills where mastery < 0.6 AND required by JD
-Layer 4: Node2Vec GNN — trained on skill dependency DAG, produces structural importance score per skill
-Layer 5: LightGBM Ranker — LambdaRank trained on 500 synthetic profiles, scores skill priority
-Layer 6: Greedy Frontier Traversal — original adaptive logic, prerequisite-safe path generation
-Layer 7: Course Mapping — fixed catalog lookup, maximizes gap skill coverage per step
-Layer 8: Deterministic Reasoning Trace — rule-based explanation per path node, no LLM involved
+SkillGraph identifies the exact skills you need to bridge the gap between your current experience and a target role. It:
 
-## Models Used
-- Node2Vec (trained): unsupervised GNN on skill dependency DAG, 64-dim embeddings, L2 norm as structural importance score. Trained on O*NET-derived skill graphs for SWE and Data domains.
-- LightGBM LambdaRank (trained): priority ranker trained on 500 synthetic candidate profiles. Features: JD importance, GNN score, mastery, in-degree, out-degree. NDCG@5: 0.7978, NDCG@10: 0.8486.
-- Gemini 1.5 Flash (pre-trained): classifier-only. Maps resume and JD text to predefined skill list. Never generates course names or skill names.
+1. **Parses** your resume and job description to extract skills using local semantic search
+2. **Scores your mastery** for each skill using a weighted formula (how often, how recently, how relevant)
+3. **Identifies gaps** — skills required by the JD that you haven't mastered yet
+4. **Builds a learning path** — ordered by a trained ML ranker, respecting prerequisite dependencies
+5. **Maps curated resources** — from a fixed 45-course catalog, zero hallucination
 
-## Datasets Used
-- O*NET Occupational Database: skill taxonomy for SWE (15-1252.00) and Data Scientist (15-2051.00). Source for all skill lists and dependency edges.
-- Kaggle Resume Dataset (snehaanbhawal/resume-dataset): validated skill taxonomy coverage against 2400 real resumes across 25 job categories.
-- Kaggle JD Dataset (kshitizregmi/jobs-and-job-description): validated JD skill patterns against real job descriptions.
-- Synthetic path data: 500 candidate profiles generated from graph algorithm. Used as LightGBM LambdaRank training data.
+---
 
-## Skill-Gap Analysis Logic
-Mastery(s) = 0.31 * frequency + 0.336 * recency + 0.354 * jd_match
-Gap: skill in JD AND mastery < 0.6
-Priority(s) = LightGBM([jd_importance, gnn_score, mastery, in_degree, out_degree])
-Path: greedy frontier traversal — pick highest-priority node with all prerequisites satisfied
+## 🧠 How It Works — 8-Layer Architecture
 
-## Quick Start (Docker) — Recommended for Judges
+| Layer | Component | Function |
+|-------|-----------|----------|
+| 1 | `all-MiniLM-L6-v2` (local) | Semantic skill extraction from resume & JD text |
+| 2 | Gemini 1.5 Flash (optional fallback) | Deep classification for sparse or low-confidence documents |
+| 3 | NetworkX DAG | Skill gap identification — flags skills where mastery < 0.6 and JD requires them |
+| 4 | Node2Vec GNN (trained) | Graph Neural Network learns structural importance of each skill in the dependency graph |
+| 5 | LightGBM LambdaRank (trained) | Ranks gap skills by learning priority using GNN scores, mastery, and JD weight |
+| 6 | Greedy Frontier Traversal | Generates a prerequisite-safe path — never suggests a skill before its prerequisites |
+| 7 | Course Catalog Lookup | Maps each path step to a curated resource (Coursera, official docs, etc.) |
+| 8 | Deterministic Reasoning Trace | Plain-English explanation for every recommendation — rule-based, zero LLM |
 
-The easiest way to run SkillGraph is using Docker. This ensures all system dependencies (like LightGBM's OpenMP) are correctly configured.
+---
 
-1. **Start the environment**:
-   ```bash
-   docker-compose up -d
-   ```
+## 🤖 Trained Models
 
-2. **Access the Application**:
-   - Frontend: [http://localhost:3000](http://localhost:3000)
-   - Backend API: [http://localhost:8000](http://localhost:8000)
+### Node2Vec Graph Neural Network
+- Learns a **64-dimensional embedding** for each skill based on its position in the skill dependency graph
+- Trained on O\*NET-derived skill dependency graphs for Software Engineering and Data Science domains
+- Output: a structural importance score per skill, used as a feature in the ranker
+
+### LightGBM LambdaRank
+- Ranks the learning path by priority — given your skill gaps, which should you learn first?
+- Trained on **500 synthetic candidate profiles** generated from the graph algorithm
+- Features: JD importance, GNN score, mastery level, skill in-degree, skill out-degree
+- **Validation results:**
+  - **NDCG@5: 0.7978** — the top 5 recommended skills are correctly prioritized ~80% of the time
+  - **NDCG@10: 0.8486** — the top 10 recommendations are in the right order ~85% of the time
+
+  > 💡 **What is NDCG?** NDCG (Normalized Discounted Cumulative Gain) is a standard ranking quality metric. A score of 1.0 = perfect ordering. Our 0.80–0.85 scores indicate the model reliably surfaces the most impactful skills first.
+
+### Gemini 1.5 Flash *(classifier-only, pre-trained)*
+- Used only as a fallback classifier when local semantic search returns sparse results
+- Maps resume/JD text to a **predefined skill list only** — it cannot invent skill or course names
+
+---
+
+## 📊 Skill-Gap Scoring Logic
+
+```
+Mastery(skill)  = 0.31 × frequency  +  0.336 × recency  +  0.354 × jd_match
+
+Gap             = skill required by JD  AND  Mastery(skill) < 0.6
+
+Priority(skill) = LightGBM([jd_importance, gnn_score, mastery, in_degree, out_degree])
+
+Path            = greedy frontier traversal — always pick the highest-priority skill
+                  whose prerequisites are all satisfied
+```
+
+---
+
+## 📚 Datasets & Sources
+
+| Dataset | Purpose |
+|---------|---------|
+| [O\*NET Occupational Database](https://www.onetonline.org/) (SOC 15-1252.00 & 15-2051.00) | Skill taxonomy and dependency edges for SWE and Data Science domains |
+| [Kaggle Resume Dataset](https://www.kaggle.com/datasets/snehaanbhawal/resume-dataset) (2,400 resumes, 25 categories) | Validated skill list coverage against real-world resumes |
+| [Kaggle JD Dataset](https://www.kaggle.com/datasets/kshitizregmi/jobs-and-job-description) | Validated JD skill pattern extraction |
+| Synthetic profiles (500) | Generated from graph algorithm; used to train the LightGBM LambdaRank model |
+
+---
+
+## ⚡ Quick Start (Docker) — Recommended for Judges
+
+```bash
+docker-compose up -d
+```
+
+Then open:
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Backend API**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+> All dependencies (LightGBM OpenMP, Python, Node.js) are pre-configured inside Docker — no setup required.
 
 ---
 
 ## 🛠 Manual Setup (Local Development)
 
-### 1. Install backend dependencies
-cd backend && pip install -r requirements.txt
+### 1. Backend
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-### 2. Install frontend dependencies
-cd frontend && npm install
+### 2. Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### 3. Run training (First time only, ~15 minutes)
+### 3. Run Model Training *(first time only, ~15 minutes)*
+```bash
 bash backend/training/run_all_training.sh
+```
 
-### 4. Start backend
-cd backend && uvicorn app.main:app --reload
-
-### 5. Start frontend
-cd frontend && npm run dev
-
-### 6. Environment variables (Optional — enables Gemini)
+### 4. Optional: Enable Gemini fallback
+```bash
 export GEMINI_API_KEY=your_key
 export SKILLGRAPH_ENABLE_GEMINI=1
+```
 
-### macOS only (Required for local LightGBM build)
+### macOS only — Required for LightGBM
+```bash
 export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:$DYLD_LIBRARY_PATH"
+```
 
-## Adaptive Logic
-The adaptive pathing layer is an original implementation. Greedy frontier traversal on a directed acyclic skill dependency graph. At each step, the algorithm selects the highest-priority node from skills whose prerequisites are all satisfied. Priority is scored by a trained LightGBM ranker using GNN structural embeddings and mastery. When a user marks a skill as learned, mastery updates to 1.0 and the full path recomputes.
+---
 
-## Grounding and Reliability
-All course recommendations are selected from a fixed 48-course catalog via deterministic lookup. The LLM is constrained to classify into the predefined skill list only — it cannot generate course names, skill names, or any free-form content. Zero hallucination by construction.
+## 🔬 Proof of Training
 
-## 📊 Evaluation & Proof of Training
-For formal evaluation:
-- **Scripts**: See `backend/training/` for GNN and LightGBM training logic.
-- **Dataset**: See `backend/training/synthetic_data.json` for the generated profile dataset.
-- **Metrics**: See `backend/models/training_summary.md` for a summary of NDCG scores and feature importance.
+All training artifacts are included in the repository:
+
+| Artifact | Location |
+|----------|----------|
+| Training scripts (Node2Vec + LightGBM) | `backend/training/` |
+| Synthetic training data (500 profiles) | `backend/training/synthetic_data.json` |
+| NDCG scores & feature importance report | `backend/models/training_summary.md` |
+
+---
+
+## 🛡 Zero Hallucination by Design
+
+All course recommendations come from a **fixed 45-course catalog** via deterministic lookup. The LLM is used only as a classifier — it maps text to a predefined skill list and **cannot generate** course names, skill names, or any free-form content. If Gemini is disabled, the system falls back to local semantic search seamlessly.
