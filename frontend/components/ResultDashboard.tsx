@@ -1,7 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { AnalyzeResponse } from "../lib/types";
-import { GraphPanel } from "./GraphPanel";
 import { PillarDashboard } from "./PillarDashboard";
 
 type Props = {
@@ -9,6 +9,18 @@ type Props = {
   onMarkLearned: (skill: string) => void;
   isRecomputing: boolean;
 };
+
+const GraphPanel = dynamic(
+  () => import("./GraphPanel").then((mod) => mod.GraphPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: "700px", display: "grid", placeItems: "center", color: "var(--muted)" }}>
+        Loading graph view...
+      </div>
+    ),
+  }
+);
 
 export function ResultDashboard({ result, onMarkLearned, isRecomputing }: Props) {
   return (

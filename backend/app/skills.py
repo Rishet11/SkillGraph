@@ -4,7 +4,7 @@ import re
 from functools import lru_cache
 
 from .data_loader import Domain, load_skills
-from .llm_classifier import classify_with_gemini
+from .llm_classifier import classify_with_gemini, gemini_enabled
 from .schemas import JDData
 
 

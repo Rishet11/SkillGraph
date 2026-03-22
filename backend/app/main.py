@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .analyzer import analyze_documents, run_parse, run_pathway
 from .data_loader import get_demo_scenario, load_courses, load_demo_scenarios
@@ -24,7 +25,10 @@ app = FastAPI(title="SkillGraph API", version="0.2.0")
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
-    return {"error": str(exc), "trace": traceback.format_exc()}
+    return JSONResponse(
+        status_code=500,
+        content={"error": str(exc), "trace": traceback.format_exc()},
+    )
 
 
 app.add_middleware(
