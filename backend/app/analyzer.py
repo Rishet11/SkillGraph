@@ -28,7 +28,7 @@ def run_parse(domain: Domain | None, resume: ParsedDocument, jd: ParsedDocument)
         
     resume_skills = classify_resume_skills(resume.text, domain)
     jd_data = classify_jd(jd.text, domain)
-    mastery_scores = compute_mastery_scores(load_skills(domain), resume_skills, jd_data)
+    mastery_scores = compute_mastery_scores(load_skills(domain), resume_skills, jd_data, domain=domain)
     return ParseResponse(
         domain=domain,
         resume_skills=resume_skills,
