@@ -59,6 +59,7 @@ class Course(BaseModel):
     difficulty: int
     domain: str
     url: str
+    estimated_hours: int = 10
 
 
 class TraceItem(BaseModel):
@@ -71,6 +72,7 @@ class TraceItem(BaseModel):
     unlocks: list[str]
     downstream_depth: int
     reason: str
+    inferred_from: str | None = None
 
 
 class GraphNode(BaseModel):
@@ -90,6 +92,7 @@ class Metrics(BaseModel):
     naive_path_length: int
     recommended_path_length: int
     reasoning_trace_coverage: int
+    total_estimated_hours: int = 0
 
 
 class PathwayResponse(BaseModel):

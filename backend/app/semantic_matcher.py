@@ -271,17 +271,58 @@ def semantic_extract(text: str, domain: Domain, threshold: float = 0.40) -> list
 def classify_jd_semantic(jd_text: str, domain: Domain) -> dict:
     """
     Classify JD skills into Required vs Preferred.
-    Skills with high similarity (model-determined) → Required.
-    Borderline matches → Preferred.
+    
+    Now uses keyword analysis: if common 'requirement' words appear in the
+    same sentence as a skill, it is marked as Required.
     """
+    # Expand abbreviations first to ensure consistent matching
+    expanded_jd = expand_abbreviations(jd_text)
+    sentences = split_sentences(expanded_jd)
+    
     matches = semantic_extract(jd_text, domain, threshold=0.38)
+    if not matches:
+        return {"required": [], "preferred": []}
 
-    required = []
-    preferred = []
+    required_keywords = {
+        "required", "must", "minimum", "necessary", "essential", "mandatory",
+        "requirement", "qualification", "proficiency", "expertise in",
+        "experience with", "years of", "background in"
+    }
+    preferred_keywords = {
+        "preferred", "plus", "beneficial", "nice to have", "desired",
+        "bonus", "ideal", "optional", "advantage"
+    }
+
+    req_list = []
+    pref_list = []
+    
+    # Pre-cache skill descriptions for lookup
+    skills, skill_descs = get_skill_descriptions(domain)
+    skill_to_desc = dict(zip(skills, skill_descs))
+
     for m in matches:
-        if m["score"] >= 0.60 or m["mentions"] >= 2:
-            required.append(m["skill"])
+        skill_name = m["skill"]
+        skill_desc = skill_to_desc.get(skill_name, skill_name).lower()
+        
+        is_required = False
+        
+        # Check every sentence where this skill might be mentioned
+        for sent in sentences:
+            sent_lower = sent.lower()
+            # If the skill or its synonyms appear in this sentence
+            if any(term.strip().lower() in sent_lower for term in skill_desc.split(',')):
+                # Look for requirement signals in this same sentence
+                if any(kw in sent_lower for kw in required_keywords):
+                    is_required = True
+                    break
+                # Secondary heuristic: high mention count or high score
+                if m["mentions"] >= 3 or m["score"] >= 0.75:
+                    is_required = True
+                    break
+        
+        if is_required:
+            req_list.append(skill_name)
         else:
-            preferred.append(m["skill"])
+            pref_list.append(skill_name)
 
-    return {"required": required, "preferred": preferred}
+    return {"required": req_list, "preferred": pref_list}

@@ -28,7 +28,9 @@ def run_parse(domain: Domain | None, resume: ParsedDocument, jd: ParsedDocument)
         
     resume_skills = classify_resume_skills(resume.text, domain)
     jd_data = classify_jd(jd.text, domain)
-    mastery_scores = compute_mastery_scores(load_skills(domain), resume_skills, jd_data, domain=domain)
+    # Handle the tuple return (scores, meta)
+    mastery_scores, _ = compute_mastery_scores(load_skills(domain), resume_skills, jd_data, domain=domain)
+    
     return ParseResponse(
         domain=domain,
         resume_skills=resume_skills,
@@ -78,26 +80,53 @@ def cluster_skills_into_pillars(skills: list[str]) -> dict[str, list[str]]:
 def run_pathway(domain: Domain | None, resume_skills: list[dict], jd_data: JDData, mastery_scores: dict[str, float]) -> PathwayResponse:
     if domain is None:
         domain = "swe"
+    
     all_skills = load_skills(domain)
     graph = build_skill_graph(domain)
+    
+    # Re-run inference to get metadata for reasoning
+    from .mastery import infer_prerequisite_mastery
+    from .data_loader import load_edges
+    edges = load_edges(domain)
+    _, inference_meta = infer_prerequisite_mastery(mastery_scores, edges, jd_data)
+    
     gap_skills = identify_gaps(all_skills, mastery_scores, jd_data)
     gap_subgraph = build_gap_subgraph(graph, gap_skills)
+    
     from .ranker import rank_skills
     priorities = rank_skills(list(gap_subgraph.nodes), domain, jd_data, mastery_scores, gap_subgraph)
+    
     learning_subgraph = build_learning_subgraph(gap_subgraph, mastery_scores)
     path = generate_learning_path(learning_subgraph, priorities, mastery_scores)
-    course_map = {skill: recommend_course(skill, gap_skills, domain) for skill in path}
+    
+    # Expand course_map to cover ALL gap skills (not just those in the path)
+    # This ensures EVERY orange node on the graph has a clickable course!
+    course_map = {
+        skill: recommend_course(skill, gap_skills, domain, mastery=mastery_scores.get(skill, 0.0)) 
+        for skill in gap_skills
+    }
+    
     reasoning = [
-        generate_trace(skill, index, gap_subgraph, priorities, mastery_scores, jd_data)
+        generate_trace(
+            skill, index, gap_subgraph, priorities, mastery_scores, jd_data, 
+            inferred_from=inference_meta.get(skill)
+        )
         for index, skill in enumerate(path)
     ]
+    
     graph_payload = build_graph_payload(gap_subgraph, path, mastery_scores, gap_skills)
+    
+    # Compute total estimated hours for the RECOMMENDED path
+    path_hours = sum(course_map[s].get("estimated_hours", 10) for s in path if s in course_map)
+    
     metrics = Metrics(
         redundant_modules_eliminated=max(0, round(((len(all_skills) - len(path)) / max(len(all_skills), 1)) * 100)),
         naive_path_length=len(all_skills),
         recommended_path_length=len(path),
         reasoning_trace_coverage=100 if len(reasoning) == len(path) else 0,
+        total_estimated_hours=path_hours
     )
+    
     return PathwayResponse(
         path=path,
         reasoning=reasoning,

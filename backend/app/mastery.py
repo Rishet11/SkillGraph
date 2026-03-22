@@ -67,34 +67,14 @@ def infer_prerequisite_mastery(
     mastery_scores: dict[str, float],
     edges: list[tuple[str, str]],
     jd_data: JDData | None = None,
-) -> dict[str, float]:
+) -> tuple[dict[str, float], dict[str, str]]:
     """
-    Graph-aware skill inference with four improvements over the naive approach:
-
-    FIX 1 — Transitive chains (BFS instead of repeated iteration):
-        Uses BFS from every mastered skill backward through the prerequisite
-        graph. Records the *minimum depth* from any mastered skill for each
-        prerequisite node, so the chain ML → NumPy → Python is fully traversed
-        even though NumPy's inferred score (0.55) is below MASTERY_THRESHOLD.
-
-    FIX 2 — Distance-weighted decay:
-        Direct prerequisite (depth 1) → BASE_INFERRED_MASTERY (0.55)
-        2 hops away           (depth 2) → 0.47
-        3 hops away           (depth 3) → 0.39
-        … (floor at 0.20)
-        So knowing ML gives stronger inference for NumPy than for Python.
-
-    FIX 3 — JD-aware boost:
-        If the JD explicitly requires an inferred skill, its inferred score is
-        bumped by JD_INFERENCE_BOOST so it's treated more seriously in ranking.
-
-    FIX 4 — Forward inference (prerequisite → dependent):
-        If the majority (≥50%) of a skill's prerequisites are mastered,
-        we infer partial knowledge of the dependent skill itself.
-        e.g. knowing NumPy + Statistics → infer partial ML knowledge (0.3–0.5)
-        This is capped well below MASTERY_THRESHOLD so it stays a visible gap.
+    ... (docstring) ...
+    Returns (updated_scores, inference_metadata)
+    where inference_metadata is {skill: inferred_from_skill_name}
     """
     result = dict(mastery_scores)
+    metadata: dict[str, str] = {}
 
     # ── Build graph lookups ──────────────────────────────────────────────────
     prereqs: dict[str, list[str]] = {}     # dst → list of src (prerequisites)
@@ -108,46 +88,46 @@ def infer_prerequisite_mastery(
         jd_skills = set(jd_data.required) | set(jd_data.preferred)
 
     # ── FIX 1 & 2: BFS backward from all mastered skills ────────────────────
-    # depth[skill] = minimum hops from any directly-mastered skill
     depth: dict[str, int] = {}
+    source_mastered_skill: dict[str, str] = {} # skill -> which mastered skill it came from
     queue: deque[str] = deque()
 
     for skill, score in result.items():
         if score >= MASTERY_THRESHOLD:
             depth[skill] = 0
             queue.append(skill)
+            source_mastered_skill[skill] = skill
 
     while queue:
         skill = queue.popleft()
         current_depth = depth[skill]
+        origin = source_mastered_skill[skill]
         for prereq in prereqs.get(skill, []):
             new_depth = current_depth + 1
-            # Only enqueue if we found a shorter path (or haven't visited yet)
             if prereq not in depth or depth[prereq] > new_depth:
                 depth[prereq] = new_depth
+                source_mastered_skill[prereq] = origin
                 queue.append(prereq)
 
     # ── Apply distance-weighted inferred scores ──────────────────────────────
     for skill, d in depth.items():
         if d == 0:
-            continue  # already mastered — don't reduce their score
+            continue
 
         decayed = BASE_INFERRED_MASTERY - (d - 1) * INFERENCE_DECAY_PER_HOP
         inferred = max(MIN_INFERRED_MASTERY, decayed)
 
-        # FIX 3: boost if JD explicitly requires this inferred skill
         if skill in jd_skills:
             inferred = min(BASE_INFERRED_MASTERY, inferred + JD_INFERENCE_BOOST)
 
-        # Only boost, never reduce existing scores
         if result.get(skill, 0.0) < inferred:
             result[skill] = round(inferred, 3)
+            metadata[skill] = source_mastered_skill[skill]
 
-    # ── FIX 4: Forward inference — prereqs known → infer dependent ──────────
-    # e.g. knows NumPy + Statistics → infer partial ML Fundamentals knowledge
+    # ── FIX 4: Forward inference ───────────────────────────────────────────
     for skill in list(result.keys()):
         if result[skill] >= MASTERY_THRESHOLD:
-            continue  # already mastered; don't touch
+            continue
         prereq_list = prereqs.get(skill, [])
         if not prereq_list:
             continue
@@ -156,20 +136,20 @@ def infer_prerequisite_mastery(
         ]
         ratio = len(mastered_prereqs) / len(prereq_list)
         if ratio >= FORWARD_INFERENCE_PREREQ_RATIO:
-            # Scale: 50% prereqs known → 0.30, 100% known → 0.50
             forward_score = round(0.30 + 0.20 * ratio, 3)
             if result[skill] < forward_score:
                 result[skill] = forward_score
+                metadata[skill] = f"prerequisites ({', '.join(mastered_prereqs)})"
 
-    return result
+    return result, metadata
 
 
 def compute_mastery_scores(
     all_skills: list[str],
     resume_data: list[dict],
     jd_data: JDData,
-    domain: str | None = None,           # FIX: explicit domain — no list comparison
-) -> dict[str, float]:
+    domain: str | None = None,
+) -> tuple[dict[str, float], dict[str, str]]:
     total_mentions = sum(item["mentions"] for item in resume_data)
     raw_scores = {
         skill: compute_mastery(skill, resume_data, jd_data, total_mentions)
@@ -182,6 +162,6 @@ def compute_mastery_scores(
             edges = load_edges(domain)
             return infer_prerequisite_mastery(raw_scores, edges, jd_data)
         except Exception:
-            pass  # fall back to raw scores on any error
+            pass
 
-    return raw_scores
+    return raw_scores, {}

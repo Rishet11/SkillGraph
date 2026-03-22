@@ -11,6 +11,7 @@ def generate_trace(
     priorities: dict[str, float],
     mastery_scores: dict[str, float],
     jd_data: JDData,
+    inferred_from: str | None = None,
 ) -> dict:
     required = skill in jd_data.required
     preferred = skill in jd_data.preferred
@@ -24,18 +25,28 @@ def generate_trace(
     )
     unlocks = list(subgraph.successors(skill))
     reasons = []
+    
     if required:
         reasons.append("explicitly required by the Job Description")
     elif preferred:
         reasons.append("listed as preferred in the Job Description")
+    
+    if inferred_from:
+        reasons.append(f"inferred prerequisite of {inferred_from}")
+        
     if depth >= 2:
         reasons.append(f"unlocks {depth} downstream skill levels")
     elif unlocks:
         reasons.append(f"directly unlocks {', '.join(unlocks)}")
+        
     if mastery < 0.3:
         reasons.append(f"current mastery is low ({mastery:.2f})")
+    elif mastery < 0.6:
+        reasons.append(f"partial knowledge detected ({mastery:.2f}), needs strengthening")
+        
     if path_position == 0:
         reasons.append("no unmet prerequisites remain, so it is a valid starting point")
+        
     return {
         "skill": skill,
         "position": path_position + 1,
@@ -46,4 +57,5 @@ def generate_trace(
         "unlocks": unlocks,
         "downstream_depth": depth,
         "reason": f"Selected because: {'; '.join(reasons)}." if reasons else "Required dependency for downstream skills.",
+        "inferred_from": inferred_from
     }

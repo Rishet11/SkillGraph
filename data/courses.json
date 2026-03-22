@@ -1,48 +1,522 @@
 [
-  {"id": "python-fundamentals", "name": "Python Fundamentals", "covers": ["Python", "Algorithms"], "difficulty": 1, "domain": "SWE", "url": "https://docs.python.org/3/tutorial/"},
-  {"id": "data-structures-algorithms", "name": "Data Structures & Algorithms", "covers": ["Data Structures", "Algorithms"], "difficulty": 2, "domain": "SWE", "url": "https://www.coursera.org/specializations/data-structures-algorithms"},
-  {"id": "oop-python", "name": "OOP with Python", "covers": ["OOP"], "difficulty": 2, "domain": "SWE", "url": "https://realpython.com/python3-object-oriented-programming/"},
-  {"id": "sql-for-developers", "name": "SQL for Developers", "covers": ["SQL"], "difficulty": 1, "domain": "SWE/Data", "url": "https://www.khanacademy.org/computing/computer-programming/sql"},
-  {"id": "rest-api-design", "name": "REST API Design & Development", "covers": ["REST APIs", "Testing", "Security Basics"], "difficulty": 2, "domain": "SWE", "url": "https://www.udemy.com/course/rest-api-design-development/"},
-  {"id": "git-version-control", "name": "Git & Version Control", "covers": ["Git"], "difficulty": 1, "domain": "SWE", "url": "https://git-scm.com/book/en/v2"},
-  {"id": "software-testing", "name": "Software Testing Fundamentals", "covers": ["Testing"], "difficulty": 2, "domain": "SWE", "url": "https://www.atlassian.com/continuous-delivery/software-testing"},
-  {"id": "linux-cli", "name": "Linux & CLI Essentials", "covers": ["Linux/CLI", "Operating Systems"], "difficulty": 1, "domain": "SWE", "url": "https://linuxjourney.com/"},
-  {"id": "docker-developers", "name": "Docker for Developers", "covers": ["Docker", "Linux/CLI", "CI/CD"], "difficulty": 2, "domain": "SWE", "url": "https://docs.docker.com/get-started/"},
-  {"id": "system-design", "name": "System Design Fundamentals", "covers": ["System Design"], "difficulty": 3, "domain": "SWE", "url": "https://www.educative.io/courses/grokking-modern-system-design-interview-for-engineers-managers"},
-  {"id": "networks-basics", "name": "Computer Networks Basics", "covers": ["Computer Networks", "Security Basics"], "difficulty": 2, "domain": "SWE", "url": "https://www.coursera.org/learn/computer-networking"},
-  {"id": "html-css", "name": "HTML & CSS Complete Guide", "covers": ["HTML/CSS"], "difficulty": 1, "domain": "SWE", "url": "https://developer.mozilla.org/en-US/docs/Learn/HTML"},
-  {"id": "javascript-essentials", "name": "JavaScript Essentials", "covers": ["JavaScript"], "difficulty": 1, "domain": "SWE", "url": "https://javascript.info/"},
-  {"id": "typescript-js", "name": "TypeScript for JS Developers", "covers": ["TypeScript"], "difficulty": 2, "domain": "SWE", "url": "https://www.typescriptlang.org/docs/"},
-  {"id": "react-guide", "name": "React.js Complete Guide", "covers": ["React"], "difficulty": 2, "domain": "SWE", "url": "https://react.dev/learn"},
-  {"id": "node-backend", "name": "Node.js Backend Development", "covers": ["Node.js", "REST APIs"], "difficulty": 2, "domain": "SWE", "url": "https://nodejs.org/en/docs/guides/"},
-  {"id": "nosql-databases", "name": "NoSQL Databases", "covers": ["Databases (NoSQL)"], "difficulty": 2, "domain": "SWE", "url": "https://www.mongodb.com/nosql-explained"},
-  {"id": "cloud-computing", "name": "Cloud Computing (AWS/GCP)", "covers": ["Cloud Basics", "Docker", "Security Basics"], "difficulty": 2, "domain": "SWE", "url": "https://aws.amazon.com/getting-started/"},
-  {"id": "cicd-pipelines", "name": "CI/CD Pipelines", "covers": ["CI/CD"], "difficulty": 2, "domain": "SWE", "url": "https://about.gitlab.com/topics/ci-cd/"},
-  {"id": "graphql-api", "name": "GraphQL API Development", "covers": ["GraphQL"], "difficulty": 3, "domain": "SWE", "url": "https://graphql.org/learn/"},
-  {"id": "microservices-architecture", "name": "Microservices Architecture", "covers": ["Microservices", "Design Patterns"], "difficulty": 3, "domain": "SWE", "url": "https://microservices.io/"},
-  {"id": "redis-caching", "name": "Caching with Redis", "covers": ["Caching (Redis)"], "difficulty": 2, "domain": "SWE", "url": "https://redis.io/docs/manual/client-side-caching/"},
-  {"id": "message-queues", "name": "Message Queues & Event Systems", "covers": ["Message Queues"], "difficulty": 3, "domain": "SWE", "url": "https://kafka.apache.org/documentation/"},
-  {"id": "clean-code", "name": "Clean Code & Design Patterns", "covers": ["Clean Code", "Design Patterns"], "difficulty": 2, "domain": "SWE", "url": "https://refactoring.guru/design-patterns"},
-  {"id": "stats-data-science", "name": "Statistics for Data Science", "covers": ["Statistics", "Probability"], "difficulty": 2, "domain": "Data", "url": "https://www.edx.org/learn/statistics"},
-  {"id": "linear-algebra-ml", "name": "Linear Algebra for ML", "covers": ["Linear Algebra"], "difficulty": 2, "domain": "Data", "url": "https://www.coursera.org/learn/linear-algebra-machine-learning"},
-  {"id": "numpy-computing", "name": "NumPy & Scientific Computing", "covers": ["NumPy"], "difficulty": 1, "domain": "Data", "url": "https://numpy.org/doc/stable/user/absolute_beginners.html"},
-  {"id": "pandas-analysis", "name": "Pandas for Data Analysis", "covers": ["Pandas", "Data Visualization"], "difficulty": 1, "domain": "Data", "url": "https://pandas.pydata.org/docs/getting_started/index.html"},
-  {"id": "feature-engineering", "name": "Feature Engineering Techniques", "covers": ["Feature Engineering"], "difficulty": 2, "domain": "Data", "url": "https://www.kaggle.com/learn/feature-engineering"},
-  {"id": "ml-fundamentals", "name": "ML Fundamentals (Scikit-Learn)", "covers": ["Machine Learning Fundamentals", "Supervised Learning", "Model Evaluation"], "difficulty": 2, "domain": "Data", "url": "https://scikit-learn.org/stable/tutorial/basic/tutorial.html"},
-  {"id": "supervised-learning", "name": "Supervised Learning", "covers": ["Supervised Learning", "Model Evaluation"], "difficulty": 2, "domain": "Data", "url": "https://www.coursera.org/learn/machine-learning"},
-  {"id": "unsupervised-learning", "name": "Unsupervised Learning", "covers": ["Unsupervised Learning"], "difficulty": 3, "domain": "Data", "url": "https://www.coursera.org/learn/unsupervised-learning-recommenders-reinforcement-learning"},
-  {"id": "deep-learning-pytorch", "name": "Deep Learning with PyTorch", "covers": ["Deep Learning", "Neural Networks", "Machine Learning Fundamentals"], "difficulty": 3, "domain": "Data", "url": "https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html"},
-  {"id": "nlp-transformers", "name": "NLP with Transformers", "covers": ["NLP"], "difficulty": 3, "domain": "Data", "url": "https://huggingface.co/learn/nlp-course/"},
-  {"id": "computer-vision", "name": "Computer Vision Fundamentals", "covers": ["Computer Vision"], "difficulty": 3, "domain": "Data", "url": "https://opencv.org/university/free-opencv-courses/"},
-  {"id": "data-engineering-sql", "name": "Data Engineering with SQL", "covers": ["Data Engineering", "ETL Pipelines"], "difficulty": 2, "domain": "Data", "url": "https://www.udacity.com/course/data-engineer-nanodegree--nd027"},
-  {"id": "spark-big-data", "name": "Apache Spark for Big Data", "covers": ["Spark"], "difficulty": 3, "domain": "Data", "url": "https://spark.apache.org/docs/latest/api/python/getting_started/index.html"},
-  {"id": "airflow-orchestration", "name": "Airflow for Data Orchestration", "covers": ["Airflow"], "difficulty": 3, "domain": "Data", "url": "https://airflow.apache.org/docs/apache-airflow/stable/tutorial/index.html"},
-  {"id": "mlops-deployment", "name": "MLOps & Model Deployment", "covers": ["MLOps", "Model Deployment"], "difficulty": 3, "domain": "Data", "url": "https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops"},
-  {"id": "bayesian-statistics", "name": "Bayesian Statistics", "covers": ["Bayesian Methods"], "difficulty": 3, "domain": "Data", "url": "https://www.coursera.org/learn/bayesian-statistics"},
-  {"id": "time-series-analysis", "name": "Time Series Analysis", "covers": ["Time Series"], "difficulty": 3, "domain": "Data", "url": "https://www.coursera.org/learn/practical-time-series-analysis"},
-  {"id": "llms-prompt-engineering", "name": "LLMs & Prompt Engineering", "covers": ["LLMs", "NLP", "Vector Databases"], "difficulty": 3, "domain": "Data", "url": "https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/"},
-  {"id": "data-viz", "name": "Data Visualization (Matplotlib/Seaborn)", "covers": ["Data Visualization"], "difficulty": 1, "domain": "Data", "url": "https://matplotlib.org/stable/tutorials/index.html"},
-  {"id": "model-evaluation", "name": "Model Evaluation & Validation", "covers": ["Model Evaluation", "Feature Engineering"], "difficulty": 2, "domain": "Data", "url": "https://machinelearningmastery.com/model-evaluation-with-scikit-learn/"},
-  {"id": "vector-databases", "name": "Vector DBs & Embeddings", "covers": ["Vector Databases"], "difficulty": 3, "domain": "Data", "url": "https://www.pinecone.io/learn/vector-database/"}
+  {
+    "id": "python-fundamentals",
+    "name": "Python Fundamentals",
+    "covers": [
+      "Python",
+      "Algorithms"
+    ],
+    "difficulty": 1,
+    "domain": "SWE",
+    "url": "https://docs.python.org/3/tutorial/",
+    "estimated_hours": 10
+  },
+  {
+    "id": "data-structures-algorithms",
+    "name": "Data Structures & Algorithms",
+    "covers": [
+      "Data Structures",
+      "Algorithms"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://www.coursera.org/specializations/data-structures-algorithms",
+    "estimated_hours": 20
+  },
+  {
+    "id": "oop-python",
+    "name": "OOP with Python",
+    "covers": [
+      "OOP"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://realpython.com/python3-object-oriented-programming/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "sql-for-developers",
+    "name": "SQL for Developers",
+    "covers": [
+      "SQL"
+    ],
+    "difficulty": 1,
+    "domain": "SWE/Data",
+    "url": "https://www.khanacademy.org/computing/computer-programming/sql",
+    "estimated_hours": 10
+  },
+  {
+    "id": "rest-api-design",
+    "name": "REST API Design & Development",
+    "covers": [
+      "REST APIs",
+      "Testing",
+      "Security Basics"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://www.udemy.com/course/rest-api-design-development/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "git-version-control",
+    "name": "Git & Version Control",
+    "covers": [
+      "Git"
+    ],
+    "difficulty": 1,
+    "domain": "SWE",
+    "url": "https://git-scm.com/book/en/v2",
+    "estimated_hours": 10
+  },
+  {
+    "id": "software-testing",
+    "name": "Software Testing Fundamentals",
+    "covers": [
+      "Testing"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://www.atlassian.com/continuous-delivery/software-testing",
+    "estimated_hours": 20
+  },
+  {
+    "id": "linux-cli",
+    "name": "Linux & CLI Essentials",
+    "covers": [
+      "Linux/CLI",
+      "Operating Systems"
+    ],
+    "difficulty": 1,
+    "domain": "SWE",
+    "url": "https://linuxjourney.com/",
+    "estimated_hours": 10
+  },
+  {
+    "id": "docker-developers",
+    "name": "Docker for Developers",
+    "covers": [
+      "Docker",
+      "Linux/CLI",
+      "CI/CD"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://docs.docker.com/get-started/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "system-design",
+    "name": "System Design Fundamentals",
+    "covers": [
+      "System Design"
+    ],
+    "difficulty": 3,
+    "domain": "SWE",
+    "url": "https://www.educative.io/courses/grokking-modern-system-design-interview-for-engineers-managers",
+    "estimated_hours": 40
+  },
+  {
+    "id": "networks-basics",
+    "name": "Computer Networks Basics",
+    "covers": [
+      "Computer Networks",
+      "Security Basics"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://www.coursera.org/learn/computer-networking",
+    "estimated_hours": 20
+  },
+  {
+    "id": "html-css",
+    "name": "HTML & CSS Complete Guide",
+    "covers": [
+      "HTML/CSS"
+    ],
+    "difficulty": 1,
+    "domain": "SWE",
+    "url": "https://developer.mozilla.org/en-US/docs/Learn/HTML",
+    "estimated_hours": 10
+  },
+  {
+    "id": "javascript-essentials",
+    "name": "JavaScript Essentials",
+    "covers": [
+      "JavaScript"
+    ],
+    "difficulty": 1,
+    "domain": "SWE",
+    "url": "https://javascript.info/",
+    "estimated_hours": 10
+  },
+  {
+    "id": "typescript-js",
+    "name": "TypeScript for JS Developers",
+    "covers": [
+      "TypeScript"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://www.typescriptlang.org/docs/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "react-guide",
+    "name": "React.js Complete Guide",
+    "covers": [
+      "React"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://react.dev/learn",
+    "estimated_hours": 20
+  },
+  {
+    "id": "node-backend",
+    "name": "Node.js Backend Development",
+    "covers": [
+      "Node.js",
+      "REST APIs"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://nodejs.org/en/docs/guides/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "nosql-databases",
+    "name": "NoSQL Databases",
+    "covers": [
+      "Databases (NoSQL)"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://www.mongodb.com/nosql-explained",
+    "estimated_hours": 20
+  },
+  {
+    "id": "cloud-computing",
+    "name": "Cloud Computing (AWS/GCP)",
+    "covers": [
+      "Cloud Basics",
+      "Docker",
+      "Security Basics"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://aws.amazon.com/getting-started/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "cicd-pipelines",
+    "name": "CI/CD Pipelines",
+    "covers": [
+      "CI/CD"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://about.gitlab.com/topics/ci-cd/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "graphql-api",
+    "name": "GraphQL API Development",
+    "covers": [
+      "GraphQL"
+    ],
+    "difficulty": 3,
+    "domain": "SWE",
+    "url": "https://graphql.org/learn/",
+    "estimated_hours": 40
+  },
+  {
+    "id": "microservices-architecture",
+    "name": "Microservices Architecture",
+    "covers": [
+      "Microservices",
+      "Design Patterns"
+    ],
+    "difficulty": 3,
+    "domain": "SWE",
+    "url": "https://microservices.io/",
+    "estimated_hours": 40
+  },
+  {
+    "id": "redis-caching",
+    "name": "Caching with Redis",
+    "covers": [
+      "Caching (Redis)"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://redis.io/docs/manual/client-side-caching/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "message-queues",
+    "name": "Message Queues & Event Systems",
+    "covers": [
+      "Message Queues"
+    ],
+    "difficulty": 3,
+    "domain": "SWE",
+    "url": "https://kafka.apache.org/documentation/",
+    "estimated_hours": 40
+  },
+  {
+    "id": "clean-code",
+    "name": "Clean Code & Design Patterns",
+    "covers": [
+      "Clean Code",
+      "Design Patterns"
+    ],
+    "difficulty": 2,
+    "domain": "SWE",
+    "url": "https://refactoring.guru/design-patterns",
+    "estimated_hours": 20
+  },
+  {
+    "id": "stats-data-science",
+    "name": "Statistics for Data Science",
+    "covers": [
+      "Statistics",
+      "Probability"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://www.edx.org/learn/statistics",
+    "estimated_hours": 20
+  },
+  {
+    "id": "linear-algebra-ml",
+    "name": "Linear Algebra for ML",
+    "covers": [
+      "Linear Algebra"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://www.coursera.org/learn/linear-algebra-machine-learning",
+    "estimated_hours": 20
+  },
+  {
+    "id": "numpy-computing",
+    "name": "NumPy & Scientific Computing",
+    "covers": [
+      "NumPy"
+    ],
+    "difficulty": 1,
+    "domain": "Data",
+    "url": "https://numpy.org/doc/stable/user/absolute_beginners.html",
+    "estimated_hours": 10
+  },
+  {
+    "id": "pandas-analysis",
+    "name": "Pandas for Data Analysis",
+    "covers": [
+      "Pandas",
+      "Data Visualization"
+    ],
+    "difficulty": 1,
+    "domain": "Data",
+    "url": "https://pandas.pydata.org/docs/getting_started/index.html",
+    "estimated_hours": 10
+  },
+  {
+    "id": "feature-engineering",
+    "name": "Feature Engineering Techniques",
+    "covers": [
+      "Feature Engineering"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://www.kaggle.com/learn/feature-engineering",
+    "estimated_hours": 20
+  },
+  {
+    "id": "ml-fundamentals",
+    "name": "ML Fundamentals (Scikit-Learn)",
+    "covers": [
+      "Machine Learning Fundamentals",
+      "Supervised Learning",
+      "Model Evaluation"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://scikit-learn.org/stable/tutorial/basic/tutorial.html",
+    "estimated_hours": 20
+  },
+  {
+    "id": "supervised-learning",
+    "name": "Supervised Learning",
+    "covers": [
+      "Supervised Learning",
+      "Model Evaluation"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://www.coursera.org/learn/machine-learning",
+    "estimated_hours": 20
+  },
+  {
+    "id": "unsupervised-learning",
+    "name": "Unsupervised Learning",
+    "covers": [
+      "Unsupervised Learning"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://www.coursera.org/learn/unsupervised-learning-recommenders-reinforcement-learning",
+    "estimated_hours": 40
+  },
+  {
+    "id": "deep-learning-pytorch",
+    "name": "Deep Learning with PyTorch",
+    "covers": [
+      "Deep Learning",
+      "Neural Networks",
+      "Machine Learning Fundamentals"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html",
+    "estimated_hours": 40
+  },
+  {
+    "id": "nlp-transformers",
+    "name": "NLP with Transformers",
+    "covers": [
+      "NLP"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://huggingface.co/learn/nlp-course/",
+    "estimated_hours": 40
+  },
+  {
+    "id": "computer-vision",
+    "name": "Computer Vision Fundamentals",
+    "covers": [
+      "Computer Vision"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://opencv.org/university/free-opencv-courses/",
+    "estimated_hours": 40
+  },
+  {
+    "id": "data-engineering-sql",
+    "name": "Data Engineering with SQL",
+    "covers": [
+      "Data Engineering",
+      "ETL Pipelines"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://www.udacity.com/course/data-engineer-nanodegree--nd027",
+    "estimated_hours": 20
+  },
+  {
+    "id": "spark-big-data",
+    "name": "Apache Spark for Big Data",
+    "covers": [
+      "Spark"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://spark.apache.org/docs/latest/api/python/getting_started/index.html",
+    "estimated_hours": 40
+  },
+  {
+    "id": "airflow-orchestration",
+    "name": "Airflow for Data Orchestration",
+    "covers": [
+      "Airflow"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://airflow.apache.org/docs/apache-airflow/stable/tutorial/index.html",
+    "estimated_hours": 40
+  },
+  {
+    "id": "mlops-deployment",
+    "name": "MLOps & Model Deployment",
+    "covers": [
+      "MLOps",
+      "Model Deployment"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops",
+    "estimated_hours": 40
+  },
+  {
+    "id": "bayesian-statistics",
+    "name": "Bayesian Statistics",
+    "covers": [
+      "Bayesian Methods"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://www.coursera.org/learn/bayesian-statistics",
+    "estimated_hours": 40
+  },
+  {
+    "id": "time-series-analysis",
+    "name": "Time Series Analysis",
+    "covers": [
+      "Time Series"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://www.coursera.org/learn/practical-time-series-analysis",
+    "estimated_hours": 40
+  },
+  {
+    "id": "llms-prompt-engineering",
+    "name": "LLMs & Prompt Engineering",
+    "covers": [
+      "LLMs",
+      "NLP",
+      "Vector Databases"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/",
+    "estimated_hours": 40
+  },
+  {
+    "id": "data-viz",
+    "name": "Data Visualization (Matplotlib/Seaborn)",
+    "covers": [
+      "Data Visualization"
+    ],
+    "difficulty": 1,
+    "domain": "Data",
+    "url": "https://matplotlib.org/stable/tutorials/index.html",
+    "estimated_hours": 10
+  },
+  {
+    "id": "model-evaluation",
+    "name": "Model Evaluation & Validation",
+    "covers": [
+      "Model Evaluation",
+      "Feature Engineering"
+    ],
+    "difficulty": 2,
+    "domain": "Data",
+    "url": "https://machinelearningmastery.com/model-evaluation-with-scikit-learn/",
+    "estimated_hours": 20
+  },
+  {
+    "id": "vector-databases",
+    "name": "Vector DBs & Embeddings",
+    "covers": [
+      "Vector Databases"
+    ],
+    "difficulty": 3,
+    "domain": "Data",
+    "url": "https://www.pinecone.io/learn/vector-database/",
+    "estimated_hours": 40
+  }
 ]
-
