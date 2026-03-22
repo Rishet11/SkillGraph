@@ -136,41 +136,70 @@ export default function HomePage() {
                 </select>
               </div>
 
-              <div className="upload-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="upload-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: 24 }}>
                 <div className="field">
-                  <label>Your Resume</label>
-                  <textarea
-                    className="textarea"
-                    placeholder="Paste resume content..."
-                    value={resumeText}
-                    onChange={(e) => setResumeText(e.target.value)}
-                    style={{ minHeight: '120px' }}
-                  />
+                  <label className="section-kicker" style={{ fontSize: '0.65rem' }}>Personal Dossier</label>
+                  <div className="grid" style={{ gap: '12px' }}>
+                    <textarea
+                      className="textarea"
+                      placeholder="Paste resume transcript..."
+                      value={resumeText}
+                      onChange={(e) => setResumeText(e.target.value)}
+                      style={{ minHeight: '140px' }}
+                    />
+                    <div className="panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.3)', border: '1px dashed var(--line)' }}>
+                      <label className="mono" style={{ fontSize: '0.65rem', display: 'block', marginBottom: 8 }}>OR UPLOAD PDF/DOC</label>
+                      <input
+                        type="file"
+                        className="file-input"
+                        onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                        accept=".pdf,.doc,.docx"
+                        style={{ fontSize: '0.75rem' }}
+                      />
+                      {resumeFile && <div className="pill good" style={{ marginTop: 8, fontSize: '0.7rem' }}>{resumeFile.name} Loaded</div>}
+                    </div>
+                  </div>
                 </div>
+
                 <div className="field">
-                  <label>Target Job Description</label>
-                  <textarea
-                    className="textarea"
-                    placeholder="Paste JD content..."
-                    value={jdText}
-                    onChange={(e) => setJdText(e.target.value)}
-                    style={{ minHeight: '120px' }}
-                  />
+                  <label className="section-kicker" style={{ fontSize: '0.65rem' }}>Target Specification</label>
+                  <div className="grid" style={{ gap: '12px' }}>
+                    <textarea
+                      className="textarea"
+                      placeholder="Paste job description..."
+                      value={jdText}
+                      onChange={(e) => setJdText(e.target.value)}
+                      style={{ minHeight: '140px' }}
+                    />
+                    <div className="panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.3)', border: '1px dashed var(--line)' }}>
+                      <label className="mono" style={{ fontSize: '0.65rem', display: 'block', marginBottom: 8 }}>OR UPLOAD PDF/DOC</label>
+                      <input
+                        type="file"
+                        className="file-input"
+                        onChange={(e) => setJdFile(e.target.files?.[0] || null)}
+                        accept=".pdf,.doc,.docx"
+                        style={{ fontSize: '0.75rem' }}
+                      />
+                      {jdFile && <div className="pill good" style={{ marginTop: 8, fontSize: '0.7rem' }}>{jdFile.name} Loaded</div>}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="actions" style={{ marginTop: 24 }}>
-              <button className="button button-primary" disabled={isPending} onClick={runAnalysis} style={{ width: '100%' }}>
-                {isPending ? "Generating Insight..." : "Run SkillGraph Engine"}
+            <div className="actions" style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--line)' }}>
+              <button className="button button-primary" disabled={isPending} onClick={runAnalysis} style={{ width: '100%', fontSize: '1.2rem', padding: '20px' }}>
+                {isPending ? "Generating Insight..." : "Run SkillGraph Engine →"}
               </button>
               <button
                 className="button button-secondary"
                 onClick={() => {
                   setResult(null); setError(null); setResumeText(""); setJdText("");
+                  setResumeFile(null); setJdFile(null);
                 }}
+                style={{ width: '100%', marginTop: 12 }}
               >
-                Reset
+                Reset Workspace
               </button>
             </div>
           </div>

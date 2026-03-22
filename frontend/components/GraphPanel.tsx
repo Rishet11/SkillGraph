@@ -71,7 +71,7 @@ export function GraphPanel({ graph }: Props) {
   }, [graph]);
 
   return (
-    <div style={{ height: "450px", width: "100%", background: "rgba(255,255,255,0.4)", borderRadius: "24px", overflow: "hidden", border: "1px solid rgba(29,31,51,0.1)" }}>
+    <div style={{ height: "700px", width: "100%", background: "transparent", overflow: "hidden" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
