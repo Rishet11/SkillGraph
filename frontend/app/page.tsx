@@ -93,7 +93,7 @@ export default function HomePage() {
         {/* Massive Typography Hero without boxes */}
         <section className="hero animate-fade-in stagger-1">
           <span className="section-kicker" style={{ fontSize: '0.85rem' }}>Next-Gen Career Intelligence</span>
-          <h1>SkillGraph <span style={{ color: 'var(--primary)' }}>v2</span></h1>
+          <h1>SkillGraph</h1>
           <p className="hero-copy">
             Bridging the gap between your current expertise and your next big role with explainable, deterministic learning pathways.
           </p>
