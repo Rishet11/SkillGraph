@@ -10,19 +10,18 @@ export function PillarDashboard({ pillars }: Props) {
   if (!pillars || Object.keys(pillars).length === 0) return null;
 
   return (
-    <div className="pillar-dashboard mb-8 animate-fade-in stagger-2">
+    <div className="animate-fade-in stagger-2">
       <span className="section-kicker">Strategic Domains</span>
-      <h3 className="mb-6">Skill Clusters</h3>
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+      <h3 style={{ marginBottom: '24px' }}>Skill Clusters</h3>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         {Object.entries(pillars).map(([pillar, skills]) => (
-          <div key={pillar} className="panel" style={{ padding: '20px', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--line)' }}>
-            <h4 className="mb-4" style={{ color: 'var(--accent)', fontSize: '0.95rem' }}>{pillar}</h4>
-            <div className="flex" style={{ flexWrap: 'wrap', gap: '8px' }}>
+          <div key={pillar} className="panel" style={{ padding: '24px' }}>
+            <h4 style={{ color: 'var(--primary)', fontSize: '1.1rem', marginBottom: '16px' }}>{pillar}</h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {skills.map((skill) => (
                 <span 
                   key={skill} 
                   className="pill"
-                  style={{ fontSize: '0.75rem', padding: '4px 10px' }}
                 >
                   {skill}
                 </span>

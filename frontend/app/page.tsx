@@ -52,8 +52,7 @@ export default function HomePage() {
     setResumeFile(null);
     setJdFile(null);
     setSampleStory(scenario.story);
-    // Auto-scroll to inputs
-    window.scrollTo({ top: 600, behavior: 'smooth' });
+    window.scrollTo({ top: 500, behavior: 'smooth' });
   };
 
   const markLearned = (skill: string) => {
@@ -91,146 +90,133 @@ export default function HomePage() {
   return (
     <main className="page-shell">
       <div className="container">
-        {/* Cinematic Hero */}
+        {/* Massive Typography Hero without boxes */}
         <section className="hero animate-fade-in stagger-1">
-          <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-            <p className="section-kicker">Next-Gen Career Intelligence</p>
-            <h1>SkillGraph <span style={{ color: 'var(--secondary)' }}>v2</span></h1>
-            <p className="hero-copy" style={{ margin: '0 auto 40px' }}>
-              Bridging the gap between your current expertise and your next big role with explainable, deterministic learning pathways.
-            </p>
-            
-            <div className="hero-stats" style={{ justifyContent: 'center' }}>
-              <div className="stat-card">
-                <span className="muted">Processing Engine</span>
-                <strong>Gemini + BERT</strong>
-              </div>
-              <div className="stat-card">
-                <span className="muted">Visualization</span>
-                <strong>React Flow</strong>
-              </div>
-              <div className="stat-card">
-                <span className="muted">Stability</span>
-                <strong>Python 3.13</strong>
-              </div>
-            </div>
-          </div>
+          <span className="section-kicker" style={{ fontSize: '0.85rem' }}>Next-Gen Career Intelligence</span>
+          <h1>SkillGraph <span style={{ color: 'var(--primary)' }}>v2</span></h1>
+          <p className="hero-copy">
+            Bridging the gap between your current expertise and your next big role with explainable, deterministic learning pathways.
+          </p>
         </section>
 
-        {/* Input & Scenarios Section */}
-        <section className="main-grid grid animate-fade-in stagger-2">
-          <div className="panel">
-            <p className="section-kicker">Workspace</p>
-            <h2>Analysis Engine</h2>
-            
-            <div className="grid" style={{ marginTop: 20 }}>
-              <div className="field">
-                <label>Target career domain</label>
+        {/* Input & Workspace Section (Pristine Panels) */}
+        <section className="grid animate-fade-in stagger-2" style={{ gridTemplateColumns: '1fr', maxWidth: '1000px', margin: '0 auto' }}>
+          
+          <div className="panel" style={{ padding: '48px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+              <div>
+                <h2>Workspace</h2>
+                <p className="muted" style={{ marginTop: 8 }}>Setup your target domain and upload your dossier.</p>
+              </div>
+              <div style={{ width: '240px' }}>
+                <label>Target Domain</label>
                 <select
                   className="file-input"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value as Domain)}
+                  style={{ cursor: 'pointer' }}
                 >
                   <option value="swe">Software Engineering</option>
                   <option value="data">Data Science & AI</option>
                 </select>
               </div>
+            </div>
 
-              <div className="upload-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: 24 }}>
-                <div className="field">
-                  <label className="section-kicker" style={{ fontSize: '0.65rem' }}>Personal Dossier</label>
-                  <div className="grid" style={{ gap: '12px' }}>
-                    <textarea
-                      className="textarea"
-                      placeholder="Paste resume transcript..."
-                      value={resumeText}
-                      onChange={(e) => setResumeText(e.target.value)}
-                      style={{ minHeight: '140px' }}
+            <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '32px' }}>
+              <div>
+                <span className="section-kicker">Input 01</span>
+                <label style={{ fontSize: '1.1rem', marginBottom: 16 }}>Personal Dossier</label>
+                <textarea
+                  className="textarea"
+                  placeholder="Paste resume transcript..."
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  style={{ minHeight: '160px', marginBottom: 16 }}
+                />
+                <div style={{ border: '1px dashed var(--border-strong)', padding: '16px', borderRadius: '12px', textAlign: 'center', background: 'var(--bg)' }}>
+                  <label style={{ cursor: 'pointer', margin: 0, color: 'var(--primary)' }}>
+                    {resumeFile ? 'File Selected' : '📁 Upload PDF / DOC'}
+                    <input
+                      type="file"
+                      onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                      accept=".pdf,.doc,.docx"
+                      style={{ display: 'none' }}
                     />
-                    <div className="panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.3)', border: '1px dashed var(--line)' }}>
-                      <label className="mono" style={{ fontSize: '0.65rem', display: 'block', marginBottom: 8 }}>OR UPLOAD PDF/DOC</label>
-                      <input
-                        type="file"
-                        className="file-input"
-                        onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                        accept=".pdf,.doc,.docx"
-                        style={{ fontSize: '0.75rem' }}
-                      />
-                      {resumeFile && <div className="pill good" style={{ marginTop: 8, fontSize: '0.7rem' }}>{resumeFile.name} Loaded</div>}
-                    </div>
-                  </div>
+                  </label>
+                  {resumeFile && <div className="pill good" style={{ marginTop: 12 }}>{resumeFile.name}</div>}
                 </div>
+              </div>
 
-                <div className="field">
-                  <label className="section-kicker" style={{ fontSize: '0.65rem' }}>Target Specification</label>
-                  <div className="grid" style={{ gap: '12px' }}>
-                    <textarea
-                      className="textarea"
-                      placeholder="Paste job description..."
-                      value={jdText}
-                      onChange={(e) => setJdText(e.target.value)}
-                      style={{ minHeight: '140px' }}
+              <div>
+                <span className="section-kicker">Input 02</span>
+                <label style={{ fontSize: '1.1rem', marginBottom: 16 }}>Target Specification</label>
+                <textarea
+                  className="textarea"
+                  placeholder="Paste job description..."
+                  value={jdText}
+                  onChange={(e) => setJdText(e.target.value)}
+                  style={{ minHeight: '160px', marginBottom: 16 }}
+                />
+                <div style={{ border: '1px dashed var(--border-strong)', padding: '16px', borderRadius: '12px', textAlign: 'center', background: 'var(--bg)' }}>
+                  <label style={{ cursor: 'pointer', margin: 0, color: 'var(--primary)' }}>
+                    {jdFile ? 'File Selected' : '📁 Upload PDF / DOC'}
+                    <input
+                      type="file"
+                      onChange={(e) => setJdFile(e.target.files?.[0] || null)}
+                      accept=".pdf,.doc,.docx"
+                      style={{ display: 'none' }}
                     />
-                    <div className="panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.3)', border: '1px dashed var(--line)' }}>
-                      <label className="mono" style={{ fontSize: '0.65rem', display: 'block', marginBottom: 8 }}>OR UPLOAD PDF/DOC</label>
-                      <input
-                        type="file"
-                        className="file-input"
-                        onChange={(e) => setJdFile(e.target.files?.[0] || null)}
-                        accept=".pdf,.doc,.docx"
-                        style={{ fontSize: '0.75rem' }}
-                      />
-                      {jdFile && <div className="pill good" style={{ marginTop: 8, fontSize: '0.7rem' }}>{jdFile.name} Loaded</div>}
-                    </div>
-                  </div>
+                  </label>
+                  {jdFile && <div className="pill good" style={{ marginTop: 12 }}>{jdFile.name}</div>}
                 </div>
               </div>
             </div>
 
-            <div className="actions" style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--line)' }}>
-              <button className="button button-primary" disabled={isPending} onClick={runAnalysis} style={{ width: '100%', fontSize: '1.2rem', padding: '20px' }}>
-                {isPending ? "Generating Insight..." : "Run SkillGraph Engine →"}
-              </button>
-              <button
-                className="button button-secondary"
-                onClick={() => {
-                  setResult(null); setError(null); setResumeText(""); setJdText("");
-                  setResumeFile(null); setJdFile(null);
-                }}
-                style={{ width: '100%', marginTop: 12 }}
-              >
-                Reset Workspace
-              </button>
+            <div style={{ marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <button className="button button-primary" disabled={isPending} onClick={runAnalysis} style={{ flex: 2, padding: '20px', fontSize: '1.1rem' }}>
+                  {isPending ? "Generating Insight..." : "Run SkillGraph Engine →"}
+                </button>
+                <button
+                  className="button button-secondary"
+                  onClick={() => {
+                    setResult(null); setError(null); setResumeText(""); setJdText("");
+                    setResumeFile(null); setJdFile(null);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="panel">
-            <p className="section-kicker">Library</p>
-            <h2>Verified Scenarios</h2>
-            <div className="grid">
+          <div style={{ marginTop: 24, textAlign: 'center' }}>
+            <span className="section-kicker">Quick Start</span>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: 16 }}>
               {samples.map((sample) => (
                 <button
-                  className="sample-button"
+                  className="button button-secondary"
                   key={sample.id}
                   onClick={() => loadSampleScenario(sample.id)}
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--panel-border)' }}
+                  style={{ fontSize: '0.85rem' }}
                 >
-                  <div style={{ color: 'var(--secondary)', fontWeight: 700, marginBottom: 4 }}>{sample.label}</div>
-                  <p className="muted" style={{ fontSize: '0.85rem' }}>{sample.story}</p>
+                  {sample.label}
                 </button>
               ))}
             </div>
+            {sampleStory && <p className="muted" style={{ marginTop: 16, fontSize: '0.9rem' }}>{sampleStory}</p>}
           </div>
+
         </section>
 
-        {/* Luminous Loading State */}
         {isPending && (
-          <section className="panel animate-fade-in" style={{ marginTop: 26, textAlign: 'center', border: '1px solid var(--primary)' }}>
-            <p className="section-kicker">Engine is running...</p>
-            <div className="loading-steps" style={{ justifyContent: 'center', marginTop: 16 }}>
+          <section className="panel animate-fade-in" style={{ marginTop: 60, textAlign: 'center', borderColor: 'var(--primary)', maxWidth: '1000px', margin: '60px auto 0' }}>
+            <span className="section-kicker">Processing via Gemini & BERT</span>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: 24, flexWrap: 'wrap' }}>
               {loadingSteps.map((step, i) => (
-                <span className="loading-step" key={step} style={{ animationDelay: `${i * 0.2}s`, background: 'var(--primary-glow)', border: '1px solid var(--primary)' }}>
-                  {step}
+                <span className="pill primary" key={step} style={{ animationDelay: `${i * 0.15}s` }}>
+                  {i+1}. {step}
                 </span>
               ))}
             </div>
@@ -238,13 +224,12 @@ export default function HomePage() {
         )}
 
         {error && (
-          <section className="panel" style={{ marginTop: 26, border: '1px solid var(--error)' }}>
-            <h3>Engine Fallback</h3>
-            <p className="muted">{error}</p>
+          <section className="panel" style={{ marginTop: 60, borderColor: 'var(--warning)', maxWidth: '1000px', margin: '60px auto 0' }}>
+            <h3 style={{ color: 'var(--warning)' }}>Engine Fallback</h3>
+            <p className="muted" style={{ marginTop: 8 }}>{error}</p>
           </section>
         )}
 
-        {/* Dashboard Placeholder/Result */}
         {result && (
           <ResultDashboard
             result={result}
