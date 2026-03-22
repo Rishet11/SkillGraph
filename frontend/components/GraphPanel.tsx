@@ -18,30 +18,27 @@ type Props = {
 };
 
 const COLORS: Record<string, string> = {
-  mastered: "#10b981", // Emerald
-  partial: "#f59e0b",  // Warn/Amber
-  critical_gap: "#ef4444", // Error/Red
-  selected_path: "#8b5cf6", // Violet/Primary
-  unseen: "#475569" // Slate
+  mastered: "#1B7A48", // Green
+  partial: "#F5A623",  // Orange
+  critical_gap: "#E05A4E", // Red
+  selected_path: "#2f78a8", // Blue
+  unseen: "#9B9B9B" // Gray
 };
 
-// Custom Node Component for a premium look
 const SkillNode = ({ data }: NodeProps) => {
   return (
-    <div className="skill-node shadow-xl" style={{ 
-      background: "rgba(30, 41, 59, 0.9)", 
-      padding: "12px 18px", 
+    <div className="skill-node shadow-lg" style={{ 
+      background: "white", 
+      padding: "12px 16px", 
       borderRadius: "16px", 
-      border: `1px solid ${COLORS[data.status] || 'rgba(255,255,255,0.1)'}`,
-      minWidth: "140px",
-      textAlign: "center",
-      backdropFilter: "blur(8px)",
-      boxShadow: `0 0 15px ${COLORS[data.status]}22`
+      border: `2px solid ${COLORS[data.status] || '#ddd'}`,
+      minWidth: "150px",
+      textAlign: "center"
     }}>
-      <Handle type="target" position={Position.Top} style={{ background: COLORS[data.status] }} />
-      <div style={{ fontWeight: "700", fontSize: "14px", color: "white", marginBottom: "4px" }}>{data.label}</div>
-      <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>Mastery: {data.mastery.toFixed(2)}</div>
-      <Handle type="source" position={Position.Bottom} style={{ background: COLORS[data.status] }} />
+      <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
+      <div style={{ fontWeight: "700", fontSize: "14px", color: "#1d1f33", marginBottom: "4px" }}>{data.label}</div>
+      <div style={{ fontSize: "11px", color: "#666" }}>Mastery: {(data.mastery * 100).toFixed(0)}%</div>
+      <Handle type="source" position={Position.Bottom} style={{ background: '#555' }} />
     </div>
   );
 };
@@ -67,21 +64,21 @@ export function GraphPanel({ graph }: Props) {
       source: edge.source,
       target: edge.target,
       animated: true,
-      style: { stroke: "rgba(139, 92, 246, 0.4)", strokeWidth: 2 },
+      style: { stroke: "#2f78a8", strokeWidth: 2, opacity: 0.4 },
     }));
 
     return { nodes: initialNodes, edges: initialEdges };
   }, [graph]);
 
   return (
-    <div style={{ height: "450px", width: "100%", background: "transparent", borderRadius: "24px", overflow: "hidden" }}>
+    <div style={{ height: "450px", width: "100%", background: "rgba(255,255,255,0.4)", borderRadius: "24px", overflow: "hidden", border: "1px solid rgba(29,31,51,0.1)" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         fitView
       >
-        <Background color="rgba(255,255,255,0.05)" gap={24} />
+        <Background color="#ddd" gap={24} />
         <Controls />
       </ReactFlow>
     </div>
