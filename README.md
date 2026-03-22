@@ -8,8 +8,8 @@ AI-adaptive onboarding engine using graph-based skill gap analysis and trained M
 SkillGraph parses a resume and job description, computes a personalized skill gap using a weighted mastery formula, and generates a dependency-aware learning path using graph-based adaptive pathing. Every recommendation comes from a fixed course catalog — zero hallucination.
 
 ## Architecture
-Layer 1: Gemini 1.5 Flash — skill classification from resume and JD text (classifier only)
-Layer 2: Mastery Scoring — deterministic formula: 0.35*frequency + 0.35*recency + 0.30*jd_match
+Layer 1: Semantic Search — `all-MiniLM-L6-v2` local vector embeddings for instant skill matching
+Layer 2: Gemini 1.5 Flash — "Deep Thinker" fallback for low-confidence or sparse document contexts
 Layer 3: Gap Identification — NetworkX DAG subgraph of skills where mastery < 0.6 AND required by JD
 Layer 4: Node2Vec GNN — trained on skill dependency DAG, produces structural importance score per skill
 Layer 5: LightGBM Ranker — LambdaRank trained on 500 synthetic profiles, scores skill priority

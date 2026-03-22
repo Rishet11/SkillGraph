@@ -66,26 +66,28 @@ def classify_resume_skills(resume_text: str, domain: Domain = None) -> list[dict
         domain = "swe" if "Technology" in detected else ("data" if "Data" in detected else "swe")
         print(f"Auto-Detected Domain: {domain} (from {detected})")
 
-    llm_result = classify_with_gemini(resume_text, domain, mode="resume")
-    if isinstance(llm_result, list):
-        normalized = []
-        allowed = set(load_skills(domain))
-        for item in llm_result:
-            skill = item.get("skill")
-            if skill in allowed:
-                normalized.append(
-                    {
+    # V2 Optimized: Local-First Semantic Extraction (Instant)
+    local_results = semantic_extract(resume_text, domain)
+    
+    # If local results are sparse or confidence is low, uses Gemini for "Global Refinement"
+    # This keeps the UI fast while leveraging LLM power for complex contexts
+    if len(local_results) < 5 and gemini_enabled():
+        llm_result = classify_with_gemini(resume_text, domain, mode="resume")
+        if isinstance(llm_result, list):
+            allowed = set(load_skills(domain))
+            normalized = []
+            for item in llm_result:
+                skill = item.get("skill")
+                if skill in allowed:
+                    normalized.append({
                         "skill": skill,
                         "mentions": int(item.get("mentions", 1)),
                         "in_recent_experience": bool(item.get("in_recent_experience", False)),
-                    }
-                )
-        if normalized:
-            normalized.sort(key=lambda item: (-item["mentions"], item["skill"]))
-            return normalized
+                    })
+            if normalized:
+                return normalized
 
-    # V2 Upgrade: Semantic Extraction replaces Keyword Falling
-    return semantic_extract(resume_text, domain)
+    return local_results
 
 
 def classify_jd(jd_text: str, domain: Domain = None) -> JDData:
@@ -95,18 +97,20 @@ def classify_jd(jd_text: str, domain: Domain = None) -> JDData:
         domain = "swe" if "Technology" in detected else ("data" if "Data" in detected else "swe")
         print(f"Auto-Detected JD Domain: {domain} (from {detected})")
 
-    llm_result = classify_with_gemini(jd_text, domain, mode="jd")
-    if isinstance(llm_result, dict):
-        allowed = set(load_skills(domain))
-        required = [skill for skill in llm_result.get("required", []) if skill in allowed]
-        preferred = [skill for skill in llm_result.get("preferred", []) if skill in allowed and skill not in required]
-        if required or preferred:
-            return JDData(required=required, preferred=preferred)
-
-    # V2 Upgrade: Semantic JD Classification
+    # V2 Optimized: Local-First Semantic JD Classification
     res = classify_jd_semantic(jd_text, domain)
     required = set(res["required"])
     preferred = set(res["preferred"])
+
+    # If parsing is extremely sparse, trigger Gemini for "Deep Context"
+    if len(required) < 3 and gemini_enabled():
+        llm_result = classify_with_gemini(jd_text, domain, mode="jd")
+        if isinstance(llm_result, dict):
+            allowed = set(load_skills(domain))
+            req_llm = [skill for skill in llm_result.get("required", []) if skill in allowed]
+            pref_llm = [skill for skill in llm_result.get("preferred", []) if skill in allowed and skill not in req_llm]
+            if req_llm or pref_llm:
+                return JDData(required=req_llm, preferred=pref_llm)
 
     # High-Recall Extraction: Alias-Aware Keyword Matching
     # This ensures items mentioned by name are always caught
